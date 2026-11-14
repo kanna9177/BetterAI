@@ -181,6 +181,14 @@ td.odd.ko { color: var(--ko); }
   border-radius: 3px; font-size: 10px; font-weight: 700;
 }
 .aiform .chk code { background: var(--panel); color: var(--muted); font-size: 10px; }
+.aiform .toggle {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  color: var(--fg); text-transform: none; letter-spacing: 0; font-weight: 400; margin: 0;
+  font-size: 13px;
+}
+.aiform .toggle input[type=checkbox] { margin: 0; }
+.aiform .toggle small { color: var(--muted); font-size: 11px; }
+
 .aiform button.go {
   grid-column: 1 / -1;
   background: var(--accent); color: #0b0d10; border: 0;

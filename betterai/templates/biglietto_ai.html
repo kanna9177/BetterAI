@@ -12,9 +12,24 @@
   <section>
     <label>Giorno</label>
     <input type="date" name="day" value="{{ day }}">
-    <p class="muted">Seme random per riproducibilita':
-      <input type="text" name="seed" value="{{ form.seed or 'ai' }}" style="width:120px">
-    </p>
+    <label class="toggle" style="margin-top:10px">
+      <input type="checkbox" id="randomize" name="randomize" value="on"
+        {% if not form or form.get('randomize') == 'on' %}checked{% endif %}>
+      <span>Randomize</span>
+      <small>(ogni click = schedine diverse)</small>
+    </label>
+    <div id="seedbox" style="display:none; margin-top:8px">
+      <small class="muted">Seme fisso (rigenera le stesse):</small>
+      <input type="text" name="seed" value="{{ form.seed or 'mario' }}" style="width:140px">
+    </div>
+    <script>
+      (function(){
+        const r = document.getElementById('randomize');
+        const box = document.getElementById('seedbox');
+        const sync = () => { box.style.display = r.checked ? 'none' : 'block'; };
+        r.addEventListener('change', sync); sync();
+      })();
+    </script>
   </section>
 
   <section>

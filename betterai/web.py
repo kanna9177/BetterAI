@@ -5,6 +5,7 @@ palinsesto -> partita -> schedina) ma UI sobria, niente loghi di terzi.
 Richiede 'flask' (unico dip oltre numpy, gia' richiesto dal modello).
 """
 import json
+import secrets
 import socket
 from datetime import date, datetime, timedelta
 
@@ -230,6 +231,8 @@ def create_app(db_path=db.DEFAULT_PATH):
         if request.method == "POST":
             sel_comps = set(request.form.getlist("comp")) or None
             sel_families = set(request.form.getlist("family")) or None
+            seed = (secrets.token_hex(4) if request.form.get("randomize") == "on"
+                    else request.form.get("seed") or "mario")
             try:
                 opts = dict(
                     comps=sel_comps,
@@ -239,7 +242,7 @@ def create_app(db_path=db.DEFAULT_PATH):
                     min_total_odds=float(request.form.get("min_odds", 1.8)),
                     max_total_odds=float(request.form.get("max_odds", 3.5)),
                     n_slips=int(request.form.get("n_slips", 10)),
-                    seed=request.form.get("seed", "ai"),
+                    seed=seed,
                 )
             except ValueError:
                 return render_template("biglietto_ai.html", day=day, comps=comps,
