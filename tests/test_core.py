@@ -1,6 +1,6 @@
 import unittest
 
-from betterai import db, learn, markets, slips
+from betterai import db, learn, markets, sisal, slips
 from betterai.model import fit_from_db, score_matrix
 
 
@@ -84,6 +84,74 @@ class CycleTest(unittest.TestCase):
         q = lambda sql: self.con.execute(sql).fetchone()[0]
         self.assertEqual(q("SELECT COUNT(*) FROM slips WHERE status = 'open'"), 0)
         self.assertGreater(q("SELECT COUNT(*) FROM legs WHERE result = -1"), 0)
+
+
+class SisalTest(unittest.TestCase):
+    def test_translate_selection(self):
+        t = sisal.translate_selection
+        self.assertEqual(t("1X2", "1"), "R:1")
+        self.assertEqual(t("Esito finale", "X"), "R:X")
+        self.assertEqual(t("Doppia chance", "X2"), "R:X2")
+        self.assertEqual(t("Goal/Nogoal", "GOAL"), "BTTS:Y")
+        self.assertEqual(t("Goal/Nogoal", "NOGOAL"), "BTTS:N")
+        self.assertEqual(t("U/O 2.5", "UNDER 2.5"), "TG:U2.5")
+        self.assertEqual(t("Under/Over 2,5", "OVER 2,5"), "TG:O2.5")
+        self.assertEqual(t("Multigol casa", "1-3"), "HG:1-3")
+        self.assertEqual(t("Multigol ospite", "2-4"), "AG:2-4")
+        self.assertIsNone(t("Marcatore", "Lautaro"))
+        self.assertIsNone(t("1X2", "pareggio"))
+
+    def test_season_of(self):
+        self.assertEqual(sisal._season_of("2026-11-20"), "2026-27")
+        self.assertEqual(sisal._season_of("2026-03-15"), "2025-26")
+        self.assertEqual(sisal._season_of("2026-07-01"), "2026-27")
+        self.assertEqual(sisal._season_of("2026-06-30"), "2025-26")
+
+    def test_parse_and_store(self):
+        con = db.connect(":memory:")
+        payload = {"eventi": [{
+            "dataOra": "2026-11-20T20:45",
+            "casa": "F.C. Internazionale", "ospite": "A.C. Milan",
+            "quote": [
+                {"tipo": "1X2", "esito": "1", "quota": 1.85},
+                {"tipo": "1X2", "esito": "X", "quota": 3.60},
+                {"tipo": "1X2", "esito": "2", "quota": 4.20},
+                {"tipo": "Doppia chance", "esito": "1X", "quota": 1.25},
+                {"tipo": "Goal/Nogoal", "esito": "GOAL", "quota": 1.65},
+                {"tipo": "U/O 2.5", "esito": "OVER 2.5", "quota": 1.80},
+                {"tipo": "Multigol casa", "esito": "1-3", "quota": 1.40},
+                {"tipo": "Marcatore", "esito": "Lautaro", "quota": 2.50},
+            ],
+        }, {
+            "dataOra": "2026-11-21T15:00",
+            "casa": "Juventus", "ospite": "Napoli",
+            "quote": [{"tipo": "1X2", "esito": "2", "quota": 2.10}],
+        }]}
+        events = sisal.parse_events(payload)
+        self.assertEqual(len(events), 2)
+        inter_milan, juve_napoli = events
+        self.assertEqual(inter_milan["home"], "Inter")
+        self.assertEqual(inter_milan["away"], "AC Milan")
+        self.assertEqual(inter_milan["date"], "2026-11-20")
+        self.assertEqual(inter_milan["time"], "20:45")
+        self.assertNotIn("Marcatore", inter_milan["quotes"])  # non modellato -> scartato
+        self.assertEqual(inter_milan["quotes"]["R:1"], 1.85)
+        self.assertEqual(inter_milan["quotes"]["BTTS:Y"], 1.65)
+        self.assertEqual(inter_milan["quotes"]["TG:O2.5"], 1.80)
+        self.assertEqual(inter_milan["quotes"]["HG:1-3"], 1.40)
+
+        m, q = sisal.store(con, "it.1", events)
+        self.assertEqual(m, 2)
+        self.assertEqual(q, 7 + 1)  # 7 quote Inter-Milan modellate, 1 Juve-Napoli
+        row = con.execute(
+            """SELECT o.odds FROM odds o JOIN matches m ON m.id = o.match_id
+               JOIN teams h ON h.id = m.home_id
+               WHERE h.name = 'Inter' AND o.selection = 'R:1'""").fetchone()
+        self.assertEqual(row[0], 1.85)
+        # re-store aggiorna invece di duplicare
+        sisal.store(con, "it.1", events)
+        self.assertEqual(
+            con.execute("SELECT COUNT(*) FROM odds").fetchone()[0], 8)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ import argparse
 import json
 from datetime import date, timedelta
 
-from . import data, db, learn, markets, slips
+from . import data, db, learn, markets, sisal, slips
 from .model import fit_from_db
 
 
@@ -110,6 +110,30 @@ def cmd_slips(con, args):
                 print(f"      {l['reason']}")
 
 
+def cmd_sisal_sync(con, args):
+    sisal.sync(con, comp=args.comp)
+
+
+def cmd_sisal_probe(con, args):
+    """Scarica la risposta grezza di Sisal e mostra quante partite ne escono.
+    Serve a vedere la struttura JSON reale (poi aggiusti parse_events)."""
+    try:
+        payload = sisal.fetch(path=args.path)
+    except Exception as e:
+        print(f"errore: {e}")
+        return
+    out = args.dump or "sisal_probe.json"
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
+    events = sisal.parse_events(payload)
+    print(f"salvato {out} ({len(json.dumps(payload))} byte)")
+    print(f"partite estratte: {len(events)}")
+    if events:
+        e = events[0]
+        print(f"prima: {e['date']} {e['time'] or ''} {e['home']} - {e['away']}, "
+              f"{len(e['quotes'])} quote")
+
+
 def cmd_team(con, args):
     t = con.execute("SELECT * FROM teams WHERE name LIKE ?", (f"%{args.name}%",)).fetchone()
     if not t:
@@ -155,6 +179,13 @@ def main(argv=None):
     p = sub.add_parser("team", help="scheda di una squadra")
     p.add_argument("name")
     p.set_defaults(fn=cmd_team)
+    p = sub.add_parser("sisal-sync", help="scarica quote reali da Sisal (vedi betterai/sisal.py)")
+    p.add_argument("--comp", default="it.1")
+    p.set_defaults(fn=cmd_sisal_sync)
+    p = sub.add_parser("sisal-probe", help="dump della risposta grezza Sisal per capirne la shape")
+    p.add_argument("--path", help="override di SISAL_PATH")
+    p.add_argument("--dump", help="file dove scrivere la risposta (default sisal_probe.json)")
+    p.set_defaults(fn=cmd_sisal_probe)
     args = ap.parse_args(argv)
     con = db.connect(args.db)
     args.fn(con, args)

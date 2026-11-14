@@ -44,6 +44,13 @@ CREATE TABLE IF NOT EXISTS learning_log(
     date TEXT PRIMARY KEY, slips INTEGER, won INTEGER, staked REAL, returned REAL,
     legs INTEGER, hits INTEGER, exp_hits REAL, matches INTEGER,
     ll_model REAL, ll_base REAL, lessons TEXT);
+-- Quote reali per partita + esito, da una fonte (sisal, betfair, ...).
+CREATE TABLE IF NOT EXISTS odds(
+    match_id INTEGER REFERENCES matches(id),
+    selection TEXT, odds REAL, source TEXT,
+    fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(match_id, selection, source));
+CREATE INDEX IF NOT EXISTS odds_match ON odds(match_id);
 """
 
 
