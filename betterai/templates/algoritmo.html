@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}algoritmo{% endblock %}
+{% block main %}
+<div class="daybar">
+  <h1>Algoritmo <span class="sep">·</span> {{ day }}</h1>
+  <form method="post" action="{{ url_for('aggiorna_risultati') }}" style="margin-left:auto">
+    <button class="btn primary" type="submit" title="Verifica le schedine aperte sui risultati arrivati">
+      Verifica risultati
+    </button>
+  </form>
+</div>
+
+<p class="muted">Cosa sa il modello oggi, come ragiona partita per partita, dove ha
+  sbagliato in passato e cosa ha imparato. "AI" nel senso: Poisson bivariato Dixon-Coles
+  con attacco/difesa stimati per squadra, ricalibrato a ogni risultato.</p>
+
+<section>
+  <h2>Come funziona in una riga</h2>
+  <ol class="algo-steps">
+    <li>Per ogni squadra stima <b>attacco</b> (quanto segna rispetto alla media) e <b>difesa</b> (quanto subisce). Le partite recenti pesano piu' di quelle vecchie (emivita ~240 giorni).</li>
+    <li>Per ogni partita calcola i <b>gol attesi</b> (xG casa, xG ospite) con il fattore campo del campionato.</li>
+    <li>Da due Poisson + correzione sui punteggi bassi (Dixon-Coles) deriva la <b>probabilita'</b> di ogni risultato esatto, e da li' tutti gli esiti del catalogo.</li>
+    <li>Ogni schedina chiusa aggiorna la <b>calibrazione</b> (se dice 70% ma il reale e' 60%, la volta dopo lo abbassa).</li>
+  </ol>
+  <p class="muted">Default modello: {{ '%.2f'|format(mu_all[0]) }} gol casa, {{ '%.2f'|format(mu_all[1]) }} gol ospite.</p>
+</section>
+
+<section>
+  <h2>Campionati conosciuti ({{ comp_mu|length }})</h2>
+  {% if comp_mu %}
+  <div class="scroll-x">
+  <table class="small">
+    <thead><tr><th>Codice</th><th>Lega</th><th>Media gol casa</th><th>Media gol ospite</th></tr></thead>
+    <tbody>
+      {% for c in comp_mu %}
+      <tr><td><code>{{ c.code }}</code></td>
+          <td>{{ c.cc }} {{ c.name }}</td>
+          <td class="odd">{{ '%.2f'|format(c.mh) }}</td>
+          <td class="odd">{{ '%.2f'|format(c.ma) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">Nessun campionato in archivio ancora.</p>
+  {% endif %}
+</section>
+
+<section class="two-col">
+  <div>
+    <h2>Attacchi migliori (top 20)</h2>
+    <table class="small">
+      <thead><tr><th>Squadra</th><th>Attacco</th></tr></thead>
+      <tbody>
+        {% for t in top_att %}
+        <tr><td>{{ t.name }}</td><td class="odd">{{ '%.2f'|format(t.v) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="muted">1.00 = media del campionato. Valori alti segnano di piu'.</p>
+  </div>
+  <div>
+    <h2>Difese migliori (top 20)</h2>
+    <table class="small">
+      <thead><tr><th>Squadra</th><th>Difesa</th></tr></thead>
+      <tbody>
+        {% for t in top_dfn %}
+        <tr><td>{{ t.name }}</td><td class="odd">{{ '%.2f'|format(t.v) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="muted">Valori bassi = subisce poco (1.00 e' la media).</p>
+  </div>
+</section>
+
+<section>
+  <h2>Ragionamento sulle partite del giorno ({{ matches_today|length }})</h2>
+  {% if matches_today %}
+  <div class="scroll-x">
+  <table class="small">
+    <thead>
+      <tr><th>Ora</th><th>Partita</th><th>Lega</th>
+          <th>xG casa</th><th>xG ospite</th>
+          <th>Top 5 esiti probabili (modello)</th></tr>
+    </thead>
+    <tbody>
+      {% for m in matches_today %}
+      <tr>
+        <td>{{ m.time or '--:--' }}</td>
+        <td><a href="{{ url_for('partita', match_id=m.id) }}">{{ m.home }} - {{ m.away }}</a></td>
+        <td class="muted">{{ m.cc }} {{ m.cname }}</td>
+        <td class="odd">{{ '%.2f'|format(m.xg_home) }}</td>
+        <td class="odd">{{ '%.2f'|format(m.xg_away) }}</td>
+        <td>
+          {% for t in m.top %}
+            <span class="pill">{{ t.label }} {{ '%.0f'|format(t.prob * 100) }}%</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">Nessuna partita in archivio per oggi.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Dove il modello sbaglia di piu' (calibrazione)</h2>
+  {% if calib_dev %}
+  <table class="small">
+    <thead><tr><th>Esito</th><th>Previsto medio</th><th>Reale</th><th>Scarto</th><th>Campione</th></tr></thead>
+    <tbody>
+      {% for r in calib_dev %}
+      <tr>
+        <td>{{ r.label }}</td>
+        <td class="odd">{{ '%.1f'|format(r.previsto * 100) }}%</td>
+        <td class="odd">{{ '%.1f'|format(r.reale * 100) }}%</td>
+        <td class="odd {{ 'ko' if r.dev > 0.05 }}">{{ '%.1f'|format(r.dev * 100) }}pt</td>
+        <td>{{ r.n }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Pochi dati ancora. Il modello impara settlando le schedine
+    (bottone <b>Verifica risultati</b> in alto o <code>python -m betterai daily</code>).</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Cosa ha imparato nelle ultime giornate</h2>
+  {% if lessons %}
+  <div class="lessons">
+    {% for l in lessons %}
+    <article class="lesson">
+      <header>
+        <b>{{ l.date }}</b> &middot; {{ l.slips }} schedine, {{ l.won }} vinte
+        {% if l.ll_model %}<span class="muted">log-loss modello {{ '%.3f'|format(l.ll_model) }} vs base {{ '%.3f'|format(l.ll_base or 0) }}</span>{% endif %}
+      </header>
+      {% if l.lines %}
+      <ul>{% for x in l.lines %}<li>{{ x }}</li>{% endfor %}</ul>
+      {% else %}
+      <p class="muted">Nessuna lezione estratta per questa giornata.</p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">Nessun log ancora. Clicca <b>Verifica risultati</b> dopo che le
+    partite sono finite.</p>
+  {% endif %}
+</section>
+{% endblock %}

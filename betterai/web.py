@@ -296,6 +296,127 @@ def create_app(db_path=db.DEFAULT_PATH):
                                label=markets.label, active="ai",
                                form=request.form)
 
+    DB_TABLES = [
+        ("teams",        "Squadre",          "Nome e id di ogni squadra incontrata"),
+        ("matches",      "Partite",          "Calendario e risultati"),
+        ("odds",         "Quote",            "Quote reali per partita + esito, per fonte"),
+        ("predictions",  "Pronostici",       "Probabilita' calcolate dal modello"),
+        ("calibration",  "Calibrazione",     "Scarto fra previsto e reale, per esito"),
+        ("slips",        "Schedine",         "Ogni schedina simulata"),
+        ("legs",         "Esiti schedina",   "Dettaglio di ogni leg nelle schedine"),
+        ("learning_log", "Log apprendimento", "Sommario giornaliero + lezioni imparate"),
+    ]
+    DB_TABLE_SET = {t[0] for t in DB_TABLES}
+
+    @app.route("/database")
+    def database():
+        c = con()
+        rows = []
+        for name, lbl, desc in DB_TABLES:
+            n = c.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
+            rows.append({"name": name, "label": lbl, "desc": desc, "n": n})
+        c.close()
+        return render_template("database.html", tables=rows, active="db")
+
+    @app.route("/database/<table>")
+    def database_table(table):
+        if table not in DB_TABLE_SET:
+            return "tabella sconosciuta", 404
+        c = con()
+        try:
+            page = max(1, int(request.args.get("page", 1)))
+        except ValueError:
+            page = 1
+        per = 50
+        offset = (page - 1) * per
+        total = c.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        probe = c.execute(f"SELECT * FROM {table} LIMIT 1").fetchone()
+        cols = list(probe.keys()) if probe else []
+        rows = c.execute(
+            f"SELECT * FROM {table} LIMIT ? OFFSET ?", (per, offset)).fetchall()
+        c.close()
+        pages = (total + per - 1) // per
+        label = next((lbl for n, lbl, _ in DB_TABLES if n == table), table)
+        return render_template("database_table.html", table=table, label=label,
+                               cols=cols, rows=rows, page=page, pages=pages,
+                               per=per, total=total, active="db")
+
+    @app.route("/algoritmo")
+    def algoritmo():
+        c = con()
+        day = request.args.get("date") or date.today().isoformat()
+        from .model import fit_from_db, score_matrix
+        model = fit_from_db(c, day)
+        # Top squadre per attacco + per difesa
+        name_of = {r["id"]: r["name"] for r in c.execute("SELECT id, name FROM teams")}
+        atts = [(tid, v) for tid, v in model.att.items() if tid in name_of]
+        dfns = [(tid, v) for tid, v in model.dfn.items() if tid in name_of]
+        top_att = [{"name": name_of[t], "v": v}
+                   for t, v in sorted(atts, key=lambda kv: -kv[1])[:20]]
+        top_dfn = [{"name": name_of[t], "v": v}
+                   for t, v in sorted(dfns, key=lambda kv: kv[1])[:20]]
+        # Medie comp
+        comp_mu = []
+        for comp, (mh, ma) in sorted(model.mu.items())[:30]:
+            cc, name = comp_label(comp)
+            comp_mu.append({"code": comp, "cc": cc, "name": name,
+                            "mh": mh, "ma": ma})
+        # Partite di oggi con xG + top 3 probabilita'
+        matches_today = []
+        for m in c.execute(
+                """SELECT m.id, m.comp, m.date, m.time, m.home_id, m.away_id,
+                          h.name home, a.name away
+                   FROM matches m
+                   JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
+                   WHERE m.date = ? ORDER BY m.time""", (day,)).fetchall():
+            lam, nu = model.xg(m["comp"], m["home_id"], m["away_id"])
+            probs = {r["selection"]: r["prob"] for r in c.execute(
+                "SELECT selection, prob FROM predictions WHERE match_id = ?",
+                (m["id"],))}
+            top3 = sorted(probs.items(), key=lambda kv: -kv[1])[:5]
+            cc, cname = comp_label(m["comp"])
+            matches_today.append({
+                "id": m["id"], "time": m["time"], "home": m["home"], "away": m["away"],
+                "cc": cc, "cname": cname, "xg_home": lam, "xg_away": nu,
+                "top": [{"sel": s, "label": markets.label(s), "prob": p} for s, p in top3],
+            })
+        # Lessons giornate recenti
+        lessons = []
+        for r in c.execute(
+                "SELECT * FROM learning_log ORDER BY date DESC LIMIT 15").fetchall():
+            try:
+                ls = json.loads(r["lessons"] or "[]")
+            except Exception:
+                ls = []
+            lessons.append({"date": r["date"], "slips": r["slips"], "won": r["won"],
+                            "ll_model": r["ll_model"], "ll_base": r["ll_base"],
+                            "lines": ls})
+        # Calibration top deviations
+        calib_dev = []
+        for r in c.execute(
+                """SELECT selection, n, hits, sum_p,
+                          ABS(hits*1.0/n - sum_p/n) AS dev
+                   FROM calibration WHERE n >= 30 ORDER BY dev DESC LIMIT 15""").fetchall():
+            calib_dev.append({"sel": r["selection"], "label": markets.label(r["selection"]),
+                              "n": r["n"], "previsto": r["sum_p"]/r["n"],
+                              "reale": r["hits"]/r["n"], "dev": r["dev"]})
+        c.close()
+        return render_template("algoritmo.html", day=day,
+                               top_att=top_att, top_dfn=top_dfn,
+                               comp_mu=comp_mu, matches_today=matches_today,
+                               lessons=lessons, calib_dev=calib_dev,
+                               mu_all=model.mu_all, active="algoritmo")
+
+    @app.route("/aggiorna-risultati", methods=["POST"])
+    def aggiorna_risultati():
+        """Fa settle: verifica tutte le schedine aperte sui risultati giunti."""
+        from . import learn
+        today = date.today().isoformat()
+        c = con()
+        closed = learn.settle(c, today)
+        c.close()
+        return render_template("aggiorna_risultati.html", closed=closed, today=today)
+
     @app.route("/aggiorna-quote", methods=["POST"])
     def aggiorna_quote():
         """Legge curl.txt nella cwd e ri-sincronizza le quote da Sisal."""

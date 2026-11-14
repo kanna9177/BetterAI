@@ -12,9 +12,11 @@
     <div class="brand"><span class="logo">BA</span> BetterAI</div>
     <nav class="tabs">
       <a href="{{ url_for('biglietto_ai') }}" class="ai {{ 'on' if active=='ai' }}">Biglietto AI</a>
-      <a href="{{ url_for('oggi') }}"      class="{{ 'on' if active=='oggi' }}">Palinsesto</a>
-      <a href="{{ url_for('schedine') }}"  class="{{ 'on' if active=='schedine' }}">Schedine</a>
-      <a href="{{ url_for('modello') }}"   class="{{ 'on' if active=='modello' }}">Modello</a>
+      <a href="{{ url_for('oggi') }}"       class="{{ 'on' if active=='oggi' }}">Palinsesto</a>
+      <a href="{{ url_for('schedine') }}"   class="{{ 'on' if active=='schedine' }}">Schedine</a>
+      <a href="{{ url_for('algoritmo') }}"  class="{{ 'on' if active=='algoritmo' }}">Algoritmo</a>
+      <a href="{{ url_for('modello') }}"    class="{{ 'on' if active=='modello' }}">Modello</a>
+      <a href="{{ url_for('database') }}"   class="{{ 'on' if active=='db' }}">Database</a>
     </nav>
     <form action="{{ url_for('aggiorna_quote') }}" method="post" class="refresh">
       <button type="submit" title="Legge curl.txt dalla cartella di avvio e riscarica le quote da Sisal">

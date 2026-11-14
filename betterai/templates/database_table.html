@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}db · {{ table }}{% endblock %}
+{% block main %}
+<div class="daybar">
+  <a class="back" href="{{ url_for('database') }}">&larr; tutte le tabelle</a>
+  <h1>{{ label }} <span class="sep">·</span> <code>{{ table }}</code></h1>
+  <span class="muted">{{ '{:,}'.format(total).replace(',', '.') }} righe totali</span>
+</div>
+
+{% if rows %}
+<div class="scroll-x">
+<table class="small db">
+  <thead>
+    <tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      {% for c in cols %}
+        {% set v = r[c] %}
+        <td class="{{ 'odd' if v.__class__.__name__ in ('int','float') }}">
+          {% if v is none %}<span class="muted">NULL</span>
+          {% elif v.__class__.__name__ == 'float' %}{{ '%.3f'|format(v) }}
+          {% elif v.__class__.__name__ == 'str' and v|length > 120 %}{{ v[:120] }}&hellip;
+          {% else %}{{ v }}{% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if pages > 1 %}
+<nav class="pager">
+  {% if page > 1 %}
+    <a class="btn" href="{{ url_for('database_table', table=table, page=page-1) }}">&larr; precedente</a>
+  {% endif %}
+  <span class="muted">pagina {{ page }} di {{ pages }}</span>
+  {% if page < pages %}
+    <a class="btn" href="{{ url_for('database_table', table=table, page=page+1) }}">successiva &rarr;</a>
+  {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="empty"><p>Tabella vuota.</p></div>
+{% endif %}
+{% endblock %}

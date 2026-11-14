@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}verifica risultati{% endblock %}
+{% block main %}
+<h1>Verifica risultati</h1>
+{% if closed %}
+<p class="ok">Chiuse schedine di {{ closed|length }} giornat{{ 'a' if closed|length == 1 else 'e' }}:
+  {% for d in closed %}<b>{{ d }}</b>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+<p><a class="btn primary" href="{{ url_for('schedine') }}">Vai alle schedine</a>
+   <a class="btn" href="{{ url_for('algoritmo') }}">Vai all'algoritmo</a></p>
+{% else %}
+<p class="muted">Nessuna schedina chiusa: o non ci sono schedine aperte, o i
+  risultati non sono ancora arrivati nel db (<code>python -m betterai sync</code>).</p>
+<p><a class="btn" href="{{ url_for('oggi') }}">&larr; Palinsesto</a></p>
+{% endif %}
+{% endblock %}

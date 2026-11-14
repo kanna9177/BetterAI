@@ -618,3 +618,47 @@ table.sisal-like td.more a:hover { background: var(--accent-line); text-decorati
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ===== Nuove pagine (Database, Algoritmo) - stili minimi, ridisegnare se serve ===== */
+
+.dbgrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px; margin-top: 16px;
+}
+.dbcard {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; display: block; color: var(--fg);
+  transition: border-color 0.15s;
+}
+.dbcard:hover { border-color: var(--accent); text-decoration: none; }
+.dbname { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.dbcount b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.dbcount { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.dbdesc { font-size: 12px; margin-bottom: 8px; min-height: 2.5em; }
+.dbcode code { font-size: 10px; }
+
+table.db td { font-size: 12px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+table.db td.odd { font-variant-numeric: tabular-nums; text-align: right; }
+
+.pager {
+  display: flex; align-items: center; gap: 12px;
+  justify-content: center; margin-top: 16px;
+}
+
+.algo-steps { padding-left: 20px; }
+.algo-steps li { margin-bottom: 6px; }
+.two-col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+.lessons {
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+.lesson {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px;
+}
+.lesson header { font-size: 12px; margin-bottom: 8px; }
+.lesson header .muted { margin-left: 8px; }
+.lesson ul { margin: 0; padding-left: 18px; font-size: 13px; }

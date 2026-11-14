@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}database{% endblock %}
+{% block main %}
+<h1>Database</h1>
+<p class="muted">Tutto cio' che il sistema ha scritto in memoria. Click sul nome
+  per sfogliare le righe.</p>
+
+<div class="dbgrid">
+  {% for t in tables %}
+    <a class="dbcard" href="{{ url_for('database_table', table=t.name) }}">
+      <div class="dbname">{{ t.label }}</div>
+      <div class="dbcount"><b>{{ '{:,}'.format(t.n).replace(',', '.') }}</b> righe</div>
+      <div class="dbdesc muted">{{ t.desc }}</div>
+      <div class="dbcode"><code>{{ t.name }}</code></div>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}
