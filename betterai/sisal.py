@@ -51,6 +51,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import defaultdict
+from datetime import datetime
+
+try:
+    from zoneinfo import ZoneInfo
+    TZ_ROME = ZoneInfo("Europe/Rome")
+except Exception:
+    TZ_ROME = None
 
 from .db import team_id
 
@@ -316,7 +323,22 @@ def parse_events(payload):
             continue
         home_raw, away_raw = desc.split(" - ", 1)
         data = ev.get("data") or ""
-        date_part, _, time_part = data.partition("T")
+        # Sisal manda UTC ("2026-11-14T14:00:00.000Z"): convertiamo in ora
+        # italiana cosi' il palinsesto combacia con quello che si vede sul sito.
+        date_part = ""
+        time_part = None
+        if data and TZ_ROME is not None:
+            try:
+                dt = datetime.fromisoformat(data.replace("Z", "+00:00"))
+                local = dt.astimezone(TZ_ROME)
+                date_part = local.date().isoformat()
+                time_part = local.strftime("%H:%M")
+            except ValueError:
+                pass
+        if not date_part:
+            # fallback: split testuale (ora resta UTC ma meglio di niente)
+            date_part, _, raw_time = data.partition("T")
+            time_part = raw_time[:5] or None
         if not date_part:
             continue
         event_id = ev.get("eventId")
@@ -342,7 +364,7 @@ def parse_events(payload):
                         quotes[sel] = {"odds": round(q / 100.0, 2), "tag": tag}
         out.append({
             "date": date_part,
-            "time": time_part[:5] or None,
+            "time": time_part,
             "home": _team_name(home_raw),
             "away": _team_name(away_raw),
             "codice_manifestazione": ev.get("codiceManifestazione"),

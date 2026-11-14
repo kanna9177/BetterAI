@@ -243,8 +243,9 @@ class SisalTest(unittest.TestCase):
 
         self.assertEqual(inter_milan["home"], "Inter")
         self.assertEqual(inter_milan["away"], "AC Milan")
+        # Fixture: 19:45 UTC a novembre -> 20:45 ora italiana (UTC+1)
         self.assertEqual(inter_milan["date"], "2026-11-20")
-        self.assertEqual(inter_milan["time"], "19:45")
+        self.assertEqual(inter_milan["time"], "20:45")
         q = inter_milan["quotes"]
         self.assertEqual(q["R:1"]["odds"], 1.85)
         self.assertEqual(q["R:X"]["odds"], 3.60)

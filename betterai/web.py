@@ -125,7 +125,7 @@ def create_app(db_path=db.DEFAULT_PATH):
                        (SELECT COUNT(*) FROM odds WHERE match_id=m.id) nq
                 FROM matches m
                 JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
-                {where} ORDER BY m.date, m.time, m.id""", (day_arg,)).fetchall()
+                {where} ORDER BY m.date, m.time, h.name""", (day_arg,)).fetchall()
         # Raggruppa per comp e ordina stile Sisal (top prima, poi per posizione).
         groups_tmp = {}
         for r in rows:
