@@ -109,6 +109,10 @@
           <span class="odds">quota &times; {{ '%.2f'|format(s.odds) }}</span>
           <span class="stake">puntata {{ '%.2f'|format(s.stake) }} &euro;</span>
           <span class="status">{{ s.status }}</span>
+          {% if share_urls.get(s.id) %}
+            <a class="play-sisal" href="{{ share_urls[s.id] }}" target="_blank"
+               rel="noopener noreferrer">Giocala su Sisal &rarr;</a>
+          {% endif %}
         </header>
         <ul class="legs">
           {% for l in legs_by_slip[s.id] %}

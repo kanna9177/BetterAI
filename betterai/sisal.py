@@ -296,10 +296,11 @@ def fetch_from_curl(curl_text, timeout=30):
 
 
 def parse_events(payload):
-    """Risposta schedaDisciplina -> [{date, time, home, away, quotes: {sel: odds}}].
+    """Risposta schedaDisciplina -> [{date, time, home, away, quotes: {sel: info}}].
 
-    Ignora i mercati non modellati da betterai (MULTIGOAL totale ecc.).
-    Le quote sono interi * 100 (205 -> 2.05)."""
+    Ogni info e' un dict con odds + 'tag' = '<eventId>_<codScom>_<idInfoAgg>_<codEsito>'
+    (formato usato dalla URL di condivisione schedina 'fillTicket='.)
+    """
     iam = payload.get("infoAggiuntivaMap") or {}
     # index: market_key ("palin-avven-codScom") -> [infoAggiuntiva, ...]
     iam_index = defaultdict(list)
@@ -318,6 +319,7 @@ def parse_events(payload):
         date_part, _, time_part = data.partition("T")
         if not date_part:
             continue
+        event_id = ev.get("eventId")
         quotes = {}
         for mkt in ev.get("scommessaKeyDataList") or []:
             cs = mkt.get("codiceScommessa")
@@ -328,16 +330,16 @@ def parse_events(payload):
                 if iv.get("stato") != 1:
                     continue
                 soglia = (iv.get("soglia") or "").strip()
+                ia = iv.get("idInfoAggiuntiva") or 0
                 for esito in iv.get("esitoList") or []:
                     if esito.get("stato") != 1:
                         continue
                     sel = translate_outcome(cs, esito.get("descrizione"), soglia)
                     q = esito.get("quota")
-                    if sel and q:
-                        quotes[sel] = {
-                            "odds": round(q / 100.0, 2),
-                            "selection_id": esito.get("selectionId"),
-                        }
+                    ce = esito.get("codiceEsito")
+                    if sel and q and event_id and ce is not None:
+                        tag = f"{event_id}_{cs}_{ia}_{ce}"
+                        quotes[sel] = {"odds": round(q / 100.0, 2), "tag": tag}
         out.append({
             "date": date_part,
             "time": time_part[:5] or None,
@@ -405,10 +407,10 @@ def store(con, comp_fallback, events, source="sisal"):
 
         n_matches += 1
         for sel, info in ev["quotes"].items():
-            # back-compat: info puo' essere un float (vecchio formato) o un dict.
+            # back-compat: info puo' essere un float o un dict {odds, tag}.
             if isinstance(info, dict):
                 price = info["odds"]
-                src_id = info.get("selection_id")
+                src_id = info.get("tag")
             else:
                 price, src_id = float(info), None
             con.execute(
@@ -417,9 +419,22 @@ def store(con, comp_fallback, events, source="sisal"):
                    ON CONFLICT(match_id, selection, source) DO UPDATE SET
                      odds=excluded.odds, source_id=excluded.source_id,
                      fetched_at=CURRENT_TIMESTAMP""",
-                (mid, sel, price, source, str(src_id) if src_id else None))
+                (mid, sel, price, source, src_id))
             n_quotes += 1
     return n_matches, n_quotes
+
+
+def share_url(legs):
+    """Costruisce l'URL di 'biglietto condiviso' Sisal.
+    legs = sequenza di (tag, odds) dove tag = '<eventId>_<codScom>_<idInfoAgg>_<codEsito>'
+    Ritorna None se qualche leg manca il tag."""
+    parts = []
+    for tag, odds in legs:
+        if not tag:
+            return None
+        parts.append(f"{tag}_{int(round(odds * 100))}")
+    return ("https://www.sisal.it/scommesse-matchpoint/betslip"
+            "?tabTicket=1&fillTicket=" + ";".join(parts))
 
 
 def sync(con, comp="it.1", curl_file=None, json_file=None, disciplina=1, log=print):

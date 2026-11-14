@@ -14,6 +14,22 @@ from flask import Flask, redirect, render_template, request, url_for
 from . import db, markets, sisal, slips
 
 
+def sisal_share_url_for_slip(con, slip_id):
+    """Costruisce l'URL 'Giocala su Sisal' per una schedina. None se qualche
+    leg non ha quota/tag Sisal corrispondente (es. mercato non coperto)."""
+    rows = con.execute(
+        """SELECT o.odds, o.source_id FROM legs l
+           LEFT JOIN odds o ON o.match_id = l.match_id
+                            AND o.selection = l.selection
+                            AND o.source = 'sisal'
+           WHERE l.slip_id = ?""",
+        (slip_id,)).fetchall()
+    if any(r["source_id"] is None or r["odds"] is None for r in rows):
+        return None
+    from . import sisal as _sisal
+    return _sisal.share_url([(r["source_id"], r["odds"]) for r in rows])
+
+
 def local_ip():
     """Restituisce l'IP della macchina sulla LAN, per aprire la dashboard dal telefono."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -175,6 +191,7 @@ def create_app(db_path=db.DEFAULT_PATH):
                    JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
                    WHERE l.slip_id = ? ORDER BY m.time, m.id""",
                 (s["id"],)).fetchall()
+        share_urls = {s["id"]: sisal_share_url_for_slip(c, s["id"]) for s in slip_rows}
         src_mix = c.execute(
             """SELECT COALESCE(odds_source,'stimato') src, COUNT(*) n FROM legs l
                JOIN slips s ON s.id = l.slip_id WHERE s.date = ?
@@ -182,6 +199,7 @@ def create_app(db_path=db.DEFAULT_PATH):
         c.close()
         return render_template("schedine.html", day=day, slips=slip_rows,
                                legs_by_slip=legs_by_slip, src_mix=src_mix,
+                               share_urls=share_urls,
                                label=markets.label, active="schedine")
 
     @app.route("/modello")
@@ -261,10 +279,12 @@ def create_app(db_path=db.DEFAULT_PATH):
                    JOIN matches m ON m.id = l.match_id
                    JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
                    WHERE l.slip_id = ? ORDER BY m.time, m.id""", (s["id"],)).fetchall()
+        share_urls = {s["id"]: sisal_share_url_for_slip(c, s["id"]) for s in made_slips}
         c.close()
         return render_template("biglietto_ai.html", day=day, comps=comps,
                                comp_label=comp_label, families=FAMILIES,
                                made=made_slips, legs_by_slip=legs_by_slip,
+                               share_urls=share_urls,
                                label=markets.label, active="ai",
                                form=request.form)
 

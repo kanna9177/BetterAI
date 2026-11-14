@@ -121,6 +121,7 @@ def _fake_sisal_payload():
                 "descrizione": "F.C. Internazionale - A.C. Milan",
                 "data": "2026-11-20T19:45:00.000Z",
                 "codiceManifestazione": 209,  # ITA Serie A
+                "eventId": 7777777,
                 "scommessaKeyDataList": [
                     {"codiceScommessa": 3,     "key": "100-500-3"},
                     {"codiceScommessa": 28319, "key": "100-500-28319"},
@@ -133,54 +134,64 @@ def _fake_sisal_payload():
                 "descrizione": "Juventus - Napoli",
                 "data": "2026-11-21T14:00:00.000Z",
                 "codiceManifestazione": 209,
+                "eventId": 7777778,
                 "scommessaKeyDataList": [{"codiceScommessa": 3, "key": "100-501-3"}],
             },
         ],
         "infoAggiuntivaMap": {
-            "100-500-3-0": {"stato": 1, "soglia": "", "esitoList": [
-                {"descrizione": "1", "quota": 185, "stato": 1, "selectionId": 999001},
-                {"descrizione": "X", "quota": 360, "stato": 1, "selectionId": 999002},
-                {"descrizione": "2", "quota": 420, "stato": 1, "selectionId": 999003},
+            "100-500-3-0": {"stato": 1, "soglia": "", "idInfoAggiuntiva": 0, "esitoList": [
+                {"descrizione": "1", "quota": 185, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "X", "quota": 360, "stato": 1, "codiceEsito": 2},
+                {"descrizione": "2", "quota": 420, "stato": 1, "codiceEsito": 3},
             ]},
-            "100-500-28319-0": {"stato": 1, "soglia": "", "esitoList": [
-                {"descrizione": "1X", "quota": 125, "stato": 1},
-                {"descrizione": "X2", "quota": 170, "stato": 1},
-                {"descrizione": "12", "quota": 140, "stato": 1},
+            "100-500-28319-0": {"stato": 1, "soglia": "", "idInfoAggiuntiva": 0, "esitoList": [
+                {"descrizione": "1X", "quota": 125, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "X2", "quota": 170, "stato": 1, "codiceEsito": 3},
+                {"descrizione": "12", "quota": 140, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-500-18-0": {"stato": 1, "soglia": "", "esitoList": [
-                {"descrizione": "GOAL",   "quota": 165, "stato": 1},
-                {"descrizione": "NOGOAL", "quota": 220, "stato": 1},
+            "100-500-18-0": {"stato": 1, "soglia": "", "idInfoAggiuntiva": 0, "esitoList": [
+                {"descrizione": "GOAL",   "quota": 165, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "NOGOAL", "quota": 220, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-500-7989-150": {"stato": 1, "soglia": "1.5", "esitoList": [
-                {"descrizione": "UNDER", "quota": 500, "stato": 1},
-                {"descrizione": "OVER",  "quota": 110, "stato": 1},
+            "100-500-7989-150": {"stato": 1, "soglia": "1.5", "idInfoAggiuntiva": 150, "esitoList": [
+                {"descrizione": "UNDER", "quota": 500, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "OVER",  "quota": 110, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-500-7989-250": {"stato": 1, "soglia": "2.5", "esitoList": [
-                {"descrizione": "UNDER", "quota": 240, "stato": 1},
-                {"descrizione": "OVER",  "quota": 180, "stato": 1},
+            "100-500-7989-250": {"stato": 1, "soglia": "2.5", "idInfoAggiuntiva": 250, "esitoList": [
+                {"descrizione": "UNDER", "quota": 240, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "OVER",  "quota": 180, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-500-7989-350": {"stato": 1, "soglia": "3.5", "esitoList": [
-                {"descrizione": "UNDER", "quota": 160, "stato": 1},
-                {"descrizione": "OVER",  "quota": 210, "stato": 1},
+            "100-500-7989-350": {"stato": 1, "soglia": "3.5", "idInfoAggiuntiva": 350, "esitoList": [
+                {"descrizione": "UNDER", "quota": 160, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "OVER",  "quota": 210, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-500-7989-550": {"stato": 1, "soglia": "5.5", "esitoList": [
+            "100-500-7989-550": {"stato": 1, "soglia": "5.5", "idInfoAggiuntiva": 550, "esitoList": [
                 # linea fuori dal catalogo betterai -> ignorata
-                {"descrizione": "UNDER", "quota": 105, "stato": 1},
+                {"descrizione": "UNDER", "quota": 105, "stato": 1, "codiceEsito": 1},
             ]},
-            "100-500-30562-0": {"stato": 1, "soglia": "", "esitoList": [
+            "100-500-30562-0": {"stato": 1, "soglia": "", "idInfoAggiuntiva": 0, "esitoList": [
                 # multigoal totale, mappato a MGT:1-3 (solo storage, non modellato)
-                {"descrizione": "1-3", "quota": 150, "stato": 1},
+                {"descrizione": "1-3", "quota": 150, "stato": 1, "codiceEsito": 2},
             ]},
-            "100-501-3-0": {"stato": 1, "soglia": "", "esitoList": [
-                {"descrizione": "1", "quota": 170, "stato": 1},
-                {"descrizione": "X", "quota": 340, "stato": 1},
-                {"descrizione": "2", "quota": 450, "stato": 0},  # sospeso -> saltato
+            "100-501-3-0": {"stato": 1, "soglia": "", "idInfoAggiuntiva": 0, "esitoList": [
+                {"descrizione": "1", "quota": 170, "stato": 1, "codiceEsito": 1},
+                {"descrizione": "X", "quota": 340, "stato": 1, "codiceEsito": 2},
+                {"descrizione": "2", "quota": 450, "stato": 0, "codiceEsito": 3},  # sospeso
             ]},
         },
     }
 
 
 class SisalTest(unittest.TestCase):
+    def test_share_url(self):
+        url = sisal.share_url([("4944729_28319_0_3", 1.48),
+                               ("4944730_3_0_1", 1.65)])
+        self.assertIn("fillTicket=4944729_28319_0_3_148;4944730_3_0_1_165", url)
+        self.assertTrue(url.startswith(
+            "https://www.sisal.it/scommesse-matchpoint/betslip?"))
+        # Se manca un tag, None
+        self.assertIsNone(sisal.share_url([("abc", 2.0), (None, 1.5)]))
+
     def test_comp_label(self):
         # Codice Serie A noto (dal file sisal_manifestazioni.json)
         cc, name = sisal.comp_label("sisal:209")
@@ -264,7 +275,8 @@ class SisalTest(unittest.TestCase):
                JOIN teams h ON h.id = m.home_id
                WHERE h.name = 'Inter' AND o.selection = 'R:1'""").fetchone()
         self.assertEqual(row["odds"], 1.85)
-        self.assertEqual(row["source_id"], "999001")  # selectionId Sisal
+        # tag = eventId_codScom_idInfoAgg_codEsito -> 1X2 esito 1 su event 7777777
+        self.assertEqual(row["source_id"], "7777777_3_0_1")
         # Comp e' il codice sisal della manifestazione, non il fallback it.1
         comp = con.execute(
             "SELECT comp FROM matches WHERE id = (SELECT MIN(id) FROM matches)"
