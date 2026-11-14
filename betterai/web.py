@@ -221,9 +221,11 @@ def create_app(db_path=db.DEFAULT_PATH):
         c = con()
         today = date.today().isoformat()
         day = request.form.get("day") or request.args.get("day") or today
-        # Competizioni disponibili per il giorno
-        comps = [r["comp"] for r in c.execute(
-            "SELECT DISTINCT comp FROM matches WHERE date = ? ORDER BY comp", (day,))]
+        # Competizioni disponibili per il giorno, ordinate stile Sisal (top prima).
+        comps = sorted(
+            (r["comp"] for r in c.execute(
+                "SELECT DISTINCT comp FROM matches WHERE date = ?", (day,))),
+            key=sisal.comp_sort_key)
         made_slips = []
         if request.method == "POST":
             sel_comps = set(request.form.getlist("comp")) or None
