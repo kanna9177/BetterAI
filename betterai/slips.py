@@ -7,6 +7,7 @@ from .model import score_matrix
 MARGIN = 0.93      # quota stimata = 0.93 / probabilita' (aggio del bookmaker)
 STAKE = 2.0
 CAL_PRIOR = 100.0  # quanto servono prove prima di fidarsi di una correzione
+ESTIMATED = "stimato"
 
 COMBO = {"R+BTTS", "R+TG", "HG+AG"}
 STRATEGIES = {
@@ -21,6 +22,19 @@ def calibration_factors(con):
     """Correzione imparata per esito: frequenza reale / probabilita' prevista."""
     return {r["selection"]: (r["hits"] + CAL_PRIOR) / (r["sum_p"] + CAL_PRIOR)
             for r in con.execute("SELECT * FROM calibration")}
+
+
+def real_odds_map(con):
+    """{(match_id, selection): (quota, fonte)} con la quota migliore tra le fonti
+    disponibili (favorevole allo scommettitore). Vuoto se la tabella odds e' vuota."""
+    out = {}
+    for r in con.execute(
+            """SELECT match_id, selection, odds, source FROM odds o1
+               WHERE odds = (SELECT MAX(odds) FROM odds o2
+                             WHERE o2.match_id = o1.match_id
+                               AND o2.selection = o1.selection)"""):
+        out[(r["match_id"], r["selection"])] = (r["odds"], r["source"])
+    return out
 
 
 def strategy_weights(con):
@@ -50,6 +64,14 @@ def predict_matches(con, model, day):
     return out
 
 
+def _leg_odds(real, match_id, selection, prob):
+    """Quota reale se c'e', altrimenti stimata da MARGIN/prob. Ritorna (quota, fonte)."""
+    hit = real.get((match_id, selection))
+    if hit:
+        return hit
+    return max(round(MARGIN / prob, 2), 1.01), ESTIMATED
+
+
 def generate(con, model, day, n=50, seed=None):
     if con.execute("SELECT 1 FROM slips WHERE date = ? LIMIT 1", (day,)).fetchone():
         return 0
@@ -57,6 +79,7 @@ def generate(con, model, day, n=50, seed=None):
     if len(cands) < 2:
         con.commit()
         return 0
+    real = real_odds_map(con)
     rng = random.Random(f"{seed}-{day}")
     weights = strategy_weights(con)
     names = list(STRATEGIES)
@@ -81,18 +104,19 @@ def generate(con, model, day, n=50, seed=None):
         if sig in seen:
             continue
         seen.add(sig)
-        leg_odds = [max(round(MARGIN / p, 2), 1.01) for _, _, p in legs]
+        priced = [(_leg_odds(real, m["id"], s, p), m, s, p) for m, s, p in legs]
         total = 1.0
-        for o in leg_odds:
+        for (o, _), _, _, _ in priced:
             total *= o
         slip_id = con.execute(
             "INSERT INTO slips(date, strategy, odds, stake) VALUES (?,?,?,?)",
             (day, name, round(total, 2), STAKE)).lastrowid
         con.executemany(
-            """INSERT INTO legs(slip_id, match_id, selection, prob, odds, xg_home, xg_away)
-               VALUES (?,?,?,?,?,?,?)""",
-            [(slip_id, m["id"], s, p, o, m["xg"][0], m["xg"][1])
-             for (m, s, p), o in zip(legs, leg_odds)])
+            """INSERT INTO legs(slip_id, match_id, selection, prob, odds,
+                                xg_home, xg_away, odds_source)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            [(slip_id, m["id"], s, p, o, m["xg"][0], m["xg"][1], src)
+             for (o, src), m, s, p in priced])
         made += 1
     con.commit()
     return made

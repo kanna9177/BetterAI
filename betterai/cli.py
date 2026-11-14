@@ -88,6 +88,15 @@ def cmd_report(con, args):
         for x in json.loads(last["lessons"]):
             print(f"  - {x}")
 
+    quote_src = con.execute(
+        """SELECT COALESCE(odds_source, 'stimato') src, COUNT(*) n FROM legs
+           GROUP BY src ORDER BY n DESC""").fetchall()
+    if quote_src and sum(r["n"] for r in quote_src) > 0:
+        tot = sum(r["n"] for r in quote_src)
+        print("\nQUOTE USATE NELLE SCHEDINE (fonte / numero / %)")
+        for r in quote_src:
+            print(f"  {r['src']:<12} {r['n']:>7}  {100 * r['n'] / tot:5.1f}%")
+
 
 def cmd_slips(con, args):
     day = args.date or con.execute("SELECT MAX(date) FROM slips").fetchone()[0]
@@ -111,19 +120,22 @@ def cmd_slips(con, args):
 
 
 def cmd_sisal_sync(con, args):
-    sisal.sync(con, comp=args.comp, curl_file=args.curl)
+    sisal.sync(con, comp=args.comp, curl_file=args.curl,
+               json_file=args.json, disciplina=args.disciplina)
 
 
 def cmd_sisal_probe(con, args):
     """Scarica (o rilegge) la risposta grezza di Sisal, parsa e stampa un sommario.
-    Usa --curl per replayare un 'Copy as cURL (bash)' da DevTools
-    (necessario a meno che i cookies in SISAL_HEADERS siano freschi)."""
+    --json: legge un file locale invece di fare la fetch.
+    --curl: replay di un 'Copy as cURL (bash)' da DevTools (per cookies akamai)."""
     try:
-        if args.curl:
+        if args.json:
+            payload = json.load(open(args.json, encoding="utf-8"))
+        elif args.curl:
             with open(args.curl, encoding="utf-8") as f:
                 payload = sisal.fetch_from_curl(f.read())
         else:
-            payload = sisal.fetch(path=args.path)
+            payload = sisal.fetch(path=args.path, disciplina=args.disciplina)
     except Exception as e:
         print(f"errore: {e}")
         return
@@ -190,11 +202,15 @@ def main(argv=None):
     p = sub.add_parser("sisal-sync", help="scarica quote reali da Sisal (vedi betterai/sisal.py)")
     p.add_argument("--comp", default="it.1")
     p.add_argument("--curl", help="file con un 'Copy as cURL (bash)' da DevTools")
+    p.add_argument("--json", help="file JSON gia' salvato (offline / replay)")
+    p.add_argument("--disciplina", type=int, default=1, help="codice Sisal (1 = calcio)")
     p.set_defaults(fn=cmd_sisal_sync)
     p = sub.add_parser("sisal-probe", help="dump della risposta grezza Sisal e sommario")
     p.add_argument("--path", help="override di SISAL_PATH")
     p.add_argument("--curl", help="file con un 'Copy as cURL (bash)' da DevTools")
+    p.add_argument("--json", help="file JSON gia' salvato (offline / replay)")
     p.add_argument("--dump", help="file dove scrivere la risposta (default sisal_probe.json)")
+    p.add_argument("--disciplina", type=int, default=1, help="codice Sisal (1 = calcio)")
     p.set_defaults(fn=cmd_sisal_probe)
     args = ap.parse_args(argv)
     con = db.connect(args.db)

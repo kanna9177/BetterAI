@@ -75,6 +75,31 @@ class CycleTest(unittest.TestCase):
         self.assertEqual(q("SELECT hits FROM calibration WHERE selection = 'R:1'"), 3)
         self.assertEqual(q("SELECT slips FROM learning_log"), made)
 
+    def test_real_odds_override_estimated(self):
+        """Quando una leg ha una quota in odds(match_id, selection, ...), la
+        schedina la usa al posto della stima MARGIN/p, con la fonte registrata."""
+        model = fit_from_db(self.con, "2025-03-01")
+        match_rows = self.con.execute(
+            "SELECT id FROM matches WHERE season = 'live'").fetchall()
+        # Inserisce una quota reale (molto diversa dalla stima) per R:1 di ogni match.
+        for (mid,) in match_rows:
+            self.con.execute(
+                "INSERT INTO odds(match_id, selection, odds, source) VALUES (?,?,?,?)",
+                (mid, "R:1", 99.99, "sisal"))
+        self.con.commit()
+        slips.generate(self.con, model, "2025-03-01", n=30, seed=7)
+        rows = self.con.execute(
+            "SELECT odds, odds_source FROM legs WHERE selection = 'R:1'").fetchall()
+        self.assertGreater(len(rows), 0)
+        for r in rows:
+            self.assertEqual(r["odds"], 99.99)
+            self.assertEqual(r["odds_source"], "sisal")
+        # Le leg senza quota reale devono restare stimate.
+        est = self.con.execute(
+            "SELECT COUNT(*) FROM legs WHERE selection != 'R:1' AND odds_source = 'stimato'"
+        ).fetchone()[0]
+        self.assertGreater(est, 0)
+
     def test_unplayed_match_is_voided(self):
         model = fit_from_db(self.con, "2025-03-01")
         slips.generate(self.con, model, "2025-03-01", n=5, seed=1)

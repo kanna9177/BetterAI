@@ -34,10 +34,11 @@ CREATE TABLE IF NOT EXISTS slips(
 CREATE INDEX IF NOT EXISTS slips_date ON slips(date);
 CREATE INDEX IF NOT EXISTS slips_open ON slips(id) WHERE status = 'open';
 -- result: NULL aperta, 1 presa, 0 persa, -1 annullata (partita non giocata).
+-- odds_source: 'stimato' (quota = MARGIN/prob) o nome fonte reale ('sisal', ...).
 CREATE TABLE IF NOT EXISTS legs(
     id INTEGER PRIMARY KEY, slip_id INTEGER REFERENCES slips(id), match_id INTEGER,
     selection TEXT, prob REAL, odds REAL, xg_home REAL, xg_away REAL,
-    result INTEGER, failed TEXT, reason TEXT);
+    result INTEGER, failed TEXT, reason TEXT, odds_source TEXT);
 CREATE INDEX IF NOT EXISTS legs_slip ON legs(slip_id);
 CREATE INDEX IF NOT EXISTS legs_open ON legs(match_id) WHERE result IS NULL;
 CREATE TABLE IF NOT EXISTS learning_log(
@@ -60,6 +61,11 @@ def connect(path=DEFAULT_PATH):
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    # Migrazione non-breaking: la colonna legs.odds_source e' stata aggiunta dopo.
+    try:
+        con.execute("ALTER TABLE legs ADD COLUMN odds_source TEXT")
+    except sqlite3.OperationalError:
+        pass  # esiste gia'
     return con
 
 

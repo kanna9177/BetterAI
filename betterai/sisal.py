@@ -55,9 +55,17 @@ from collections import defaultdict
 from .db import team_id
 
 SISAL_BASE = os.environ.get("SISAL_BASE", "https://betting.sisal.it")
-SISAL_PATH = os.environ.get(
-    "SISAL_PATH",
-    "/api/lettura-palinsesto-sport/palinsesto/prematch/schedaDisciplina/1/1/80/1000001?offerId=0")
+SISAL_PATH_TMPL = os.environ.get(
+    "SISAL_PATH_TMPL",
+    "/api/lettura-palinsesto-sport/palinsesto/prematch/"
+    "schedaDisciplina/{disciplina}/1/80/1000001?offerId=0")
+
+# codiceDisciplina Sisal -> comp code openfootball-ish (se vogliamo mapparlo).
+# calcio = 1. basket = 15. tennis = 7. per ora supportiamo solo calcio.
+DISCIPLINE = {
+    1: "calcio",
+}
+SISAL_PATH = SISAL_PATH_TMPL.format(disciplina=1)  # retro-compat
 SISAL_HEADERS = {
     "Accept": "*/*",
     "Accept-Language": "it-IT,it;q=0.9",
@@ -177,9 +185,12 @@ def parse_curl(text):
     return url, headers
 
 
-def fetch(path=None, headers=None, timeout=30):
-    """GET json da Sisal. Stdlib. Raise su errore."""
-    url = f"{SISAL_BASE}{path or SISAL_PATH}"
+def fetch(path=None, disciplina=1, headers=None, timeout=30):
+    """GET json da Sisal. Stdlib. Raise su errore.
+    Se path None usa SISAL_PATH_TMPL con la disciplina indicata."""
+    if path is None:
+        path = SISAL_PATH_TMPL.format(disciplina=disciplina)
+    url = f"{SISAL_BASE}{path}"
     req = urllib.request.Request(url, headers=headers or SISAL_HEADERS)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
@@ -274,15 +285,20 @@ def store(con, comp, events, source="sisal"):
     return n_matches, n_quotes
 
 
-def sync(con, comp="it.1", curl_file=None, log=print):
-    """Scarica, parsa, salva. curl_file: path a un 'Copy as cURL (bash)' di
-    DevTools (cookies freschi inclusi); se None usa SISAL_HEADERS."""
+def sync(con, comp="it.1", curl_file=None, json_file=None, disciplina=1, log=print):
+    """Scarica, parsa, salva. Tre modalita' di sorgente (prima vince):
+      - json_file: legge una risposta gia' salvata (test/offline/repay).
+      - curl_file: replay di un 'Copy as cURL (bash)' da DevTools (cookies).
+      - default: fetch con SISAL_HEADERS (funziona solo se i cookies lo permettono)."""
     try:
-        if curl_file:
+        if json_file:
+            with open(json_file, encoding="utf-8") as f:
+                payload = json.load(f)
+        elif curl_file:
             with open(curl_file, encoding="utf-8") as f:
                 payload = fetch_from_curl(f.read())
         else:
-            payload = fetch()
+            payload = fetch(disciplina=disciplina)
     except urllib.error.HTTPError as e:
         log(f"sisal: HTTP {e.code} ({e.reason}); probabilmente cookies scaduti")
         return 0, 0
