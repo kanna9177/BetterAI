@@ -3,7 +3,7 @@ import argparse
 import json
 from datetime import date, timedelta
 
-from . import data, db, learn, markets, sisal, slips
+from . import data, db, diretta, learn, markets, sisal, slips
 from .model import fit_from_db
 
 
@@ -154,6 +154,23 @@ def cmd_sisal_probe(con, args):
               f"{len(e['quotes'])} quote")
 
 
+def cmd_diretta_probe(con, args):
+    """Replay di un cURL verso diretta.it e salva la risposta grezza.
+    Il formato non e' JSON: salviamo i bytes per poi scrivere il parser."""
+    try:
+        with open(args.curl, encoding="utf-8") as f:
+            raw = diretta.fetch_from_curl(f.read())
+    except Exception as e:
+        print(f"errore: {e}")
+        return
+    out = args.dump or "diretta_probe.bin"
+    with open(out, "wb") as f:
+        f.write(raw)
+    print(f"salvato {out} ({len(raw)} byte)")
+    info = diretta.parse_response(raw)
+    print(f"  preview: {info.get('preview', '')!r}")
+
+
 def cmd_web(con, args):
     con.close()  # web app apre la sua connessione per ogni richiesta
     from . import web
@@ -225,6 +242,11 @@ def main(argv=None):
     p.add_argument("--port", type=int, default=5000)
     p.add_argument("--debug", action="store_true")
     p.set_defaults(fn=cmd_web)
+    p = sub.add_parser("diretta-probe",
+                       help="replay di un cURL diretta.it e salva la risposta grezza")
+    p.add_argument("--curl", required=True, help="file con 'Copy as cURL (bash)' da DevTools")
+    p.add_argument("--dump", help="file di output (default diretta_probe.bin)")
+    p.set_defaults(fn=cmd_diretta_probe)
     p = sub.add_parser("sisal-probe", help="dump della risposta grezza Sisal e sommario")
     p.add_argument("--path", help="override di SISAL_PATH")
     p.add_argument("--curl", help="file con un 'Copy as cURL (bash)' da DevTools")

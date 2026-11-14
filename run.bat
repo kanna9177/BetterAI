@@ -1,7 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
-
 title BetterAI
 
 echo.
@@ -10,36 +9,58 @@ echo    BetterAI - avvio dashboard
 echo   ======================================
 echo.
 
-where /q python
-if errorlevel 1 (
+rem --- Trova un python usabile: prima py -3, poi python ---
+set "PY="
+where py >nul 2>nul
+if not errorlevel 1 (
+    for /f "delims=" %%v in ('py -3 --version 2^>nul') do set "PY=py -3" & set "PYVER=%%v"
+)
+if not defined PY (
+    where python >nul 2>nul
+    if not errorlevel 1 (
+        for /f "delims=" %%v in ('python --version 2^>nul') do set "PY=python" & set "PYVER=%%v"
+    )
+)
+
+if not defined PY (
     echo   [!!] Python non trovato nel PATH.
     echo        Installa Python 3.11+ da https://www.python.org/downloads/
-    echo        (ricorda di spuntare "Add Python to PATH" in fase di installazione.)
+    echo        ^(importante: spunta "Add Python to PATH" durante l'installazione^)
     echo.
     pause
     exit /b 1
 )
 
+echo   [i] uso: %PY%  ^(!PYVER!^)
+echo.
+
 echo   [1/3] installo dipendenze ^(numpy, flask^)...
-python -m pip install -q -r requirements.txt
+%PY% -m pip install --disable-pip-version-check -r requirements.txt
 if errorlevel 1 (
-    echo   [!!] pip install fallito.
+    echo.
+    echo   [!!] pip install fallito. Vedi l'errore qui sopra.
+    echo        Se dice "externally-managed-environment" prova:
+    echo           %PY% -m pip install --user -r requirements.txt
+    echo.
     pause
     exit /b 1
 )
 
 if not exist data\betterai.db (
     echo.
-    echo   [i] database vuoto: faccio un sync iniziale di openfootball...
-    python -m betterai sync
+    echo   [i] database vuoto: sync iniziale openfootball ^(~10 secondi^)...
+    %PY% -m betterai sync
 )
 
 echo.
 echo   [2/3] apro il browser...
-start http://127.0.0.1:5000
+start "" "http://127.0.0.1:5000"
 
-echo   [3/3] lancio il server. Chiudi questa finestra per fermare.
+echo   [3/3] avvio il server BetterAI. CHIUDI QUESTA FINESTRA per fermarlo.
+echo        ^(dal telefono: stesso WiFi, apri l'URL "dal telefono" che compare sotto^)
 echo.
-python -m betterai web --host 0.0.0.0 --port 5000
+%PY% -m betterai web --host 0.0.0.0 --port 5000
 
+echo.
+echo   Server terminato.
 pause
