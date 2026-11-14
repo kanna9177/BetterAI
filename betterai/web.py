@@ -133,8 +133,12 @@ def create_app(db_path=db.DEFAULT_PATH):
             groups_tmp.setdefault(cc, []).append(r)
         groups = dict(sorted(groups_tmp.items(),
                              key=lambda kv: sisal.comp_sort_key(kv[0])))
-        # TOP SCOMMESSE = prime 6 partite della competizione piu' popolosa, altrimenti prime 6 globali
-        top = rows[:6] if rows else []
+        # TOP SCOMMESSE: prime 10 partite ordinate per IMPORTANZA della competizione
+        # (come fa Sisal). Nations League 20:45 prima di Bayswater 08:30.
+        top = sorted(
+            rows,
+            key=lambda r: (sisal.comp_sort_key(r["comp"]), r["time"] or "99:99"),
+        )[:10]
         # schedine AI del giorno per sidebar
         slips_today = c.execute(
             """SELECT * FROM slips WHERE date = ? ORDER BY id DESC LIMIT 6""",
