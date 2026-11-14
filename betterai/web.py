@@ -5,11 +5,24 @@ palinsesto -> partita -> schedina) ma UI sobria, niente loghi di terzi.
 Richiede 'flask' (unico dip oltre numpy, gia' richiesto dal modello).
 """
 import json
+import socket
 from datetime import date, datetime, timedelta
 
 from flask import Flask, redirect, render_template, request, url_for
 
 from . import db, markets, sisal, slips
+
+
+def local_ip():
+    """Restituisce l'IP della macchina sulla LAN, per aprire la dashboard dal telefono."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
 
 
 def _row_dict(r):

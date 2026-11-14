@@ -8,6 +8,7 @@
 </div>
 
 {% if rows %}
+<div class="scroll-x">
 <table class="matches">
   <thead>
     <tr>
@@ -40,7 +41,8 @@
     {% endfor %}
   </tbody>
 </table>
-<p class="muted">{{ rows|length }} partite · click sul nome di casa per i mercati completi.</p>
+</div>
+<p class="muted">{{ rows|length }} partite · tap sul nome di casa per i mercati completi.</p>
 {% else %}
 <div class="empty">
   <p>Nessuna partita in archivio per questa data.</p>

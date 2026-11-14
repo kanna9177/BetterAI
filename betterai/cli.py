@@ -157,7 +157,14 @@ def cmd_sisal_probe(con, args):
 def cmd_web(con, args):
     con.close()  # web app apre la sua connessione per ogni richiesta
     from . import web
-    print(f"BetterAI web su http://{args.host}:{args.port}  (db: {args.db})")
+    lan = web.local_ip()
+    print()
+    print("  BetterAI dashboard")
+    print(f"    da questo PC   : http://127.0.0.1:{args.port}")
+    if lan != "127.0.0.1" and args.host in ("0.0.0.0", lan):
+        print(f"    dal telefono   : http://{lan}:{args.port}  (stessa WiFi)")
+    print(f"    db             : {args.db}")
+    print()
     web.create_app(args.db).run(host=args.host, port=args.port, debug=args.debug)
 
 
@@ -213,7 +220,8 @@ def main(argv=None):
     p.add_argument("--disciplina", type=int, default=1, help="codice Sisal (1 = calcio)")
     p.set_defaults(fn=cmd_sisal_sync)
     p = sub.add_parser("web", help="dashboard web (richiede 'flask')")
-    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--host", default="0.0.0.0",
+                   help="0.0.0.0 = accessibile anche dal telefono in LAN")
     p.add_argument("--port", type=int, default=5000)
     p.add_argument("--debug", action="store_true")
     p.set_defaults(fn=cmd_web)
