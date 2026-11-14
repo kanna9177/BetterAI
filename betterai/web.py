@@ -49,6 +49,11 @@ def _row_dict(r):
 def create_app(db_path=db.DEFAULT_PATH):
     app = Flask(__name__)
     app.config["DB_PATH"] = db_path
+    # Template e static ricaricati ad ogni richiesta: evita di dover chiudere
+    # il server quando si cambia un .html o il CSS.
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.jinja_env.auto_reload = True
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
     COMP_LABELS = {
         "it.1": ("ITA", "Serie A"),
