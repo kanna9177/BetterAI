@@ -46,9 +46,11 @@ CREATE TABLE IF NOT EXISTS learning_log(
     legs INTEGER, hits INTEGER, exp_hits REAL, matches INTEGER,
     ll_model REAL, ll_base REAL, lessons TEXT);
 -- Quote reali per partita + esito, da una fonte (sisal, betfair, ...).
+-- source_id: id dell'esito sul sito della fonte (es. sisal selectionId)
+-- usato per costruire URL di condivisione schedina verso il sito originale.
 CREATE TABLE IF NOT EXISTS odds(
     match_id INTEGER REFERENCES matches(id),
-    selection TEXT, odds REAL, source TEXT,
+    selection TEXT, odds REAL, source TEXT, source_id TEXT,
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(match_id, selection, source));
 CREATE INDEX IF NOT EXISTS odds_match ON odds(match_id);
@@ -66,6 +68,11 @@ def connect(path=DEFAULT_PATH):
         con.execute("ALTER TABLE legs ADD COLUMN odds_source TEXT")
     except sqlite3.OperationalError:
         pass  # esiste gia'
+    # Migrazione non-breaking: odds.source_id per il deep-link verso la fonte.
+    try:
+        con.execute("ALTER TABLE odds ADD COLUMN source_id TEXT")
+    except sqlite3.OperationalError:
+        pass
     return con
 
 

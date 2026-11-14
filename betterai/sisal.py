@@ -334,7 +334,10 @@ def parse_events(payload):
                     sel = translate_outcome(cs, esito.get("descrizione"), soglia)
                     q = esito.get("quota")
                     if sel and q:
-                        quotes[sel] = round(q / 100.0, 2)
+                        quotes[sel] = {
+                            "odds": round(q / 100.0, 2),
+                            "selection_id": esito.get("selectionId"),
+                        }
         out.append({
             "date": date_part,
             "time": time_part[:5] or None,
@@ -401,13 +404,20 @@ def store(con, comp_fallback, events, source="sisal"):
                 (comp, season, hid, aid)).fetchone()[0]
 
         n_matches += 1
-        for sel, price in ev["quotes"].items():
+        for sel, info in ev["quotes"].items():
+            # back-compat: info puo' essere un float (vecchio formato) o un dict.
+            if isinstance(info, dict):
+                price = info["odds"]
+                src_id = info.get("selection_id")
+            else:
+                price, src_id = float(info), None
             con.execute(
-                """INSERT INTO odds(match_id, selection, odds, source)
-                   VALUES (?,?,?,?)
+                """INSERT INTO odds(match_id, selection, odds, source, source_id)
+                   VALUES (?,?,?,?,?)
                    ON CONFLICT(match_id, selection, source) DO UPDATE SET
-                     odds=excluded.odds, fetched_at=CURRENT_TIMESTAMP""",
-                (mid, sel, price, source))
+                     odds=excluded.odds, source_id=excluded.source_id,
+                     fetched_at=CURRENT_TIMESTAMP""",
+                (mid, sel, price, source, str(src_id) if src_id else None))
             n_quotes += 1
     return n_matches, n_quotes
 

@@ -138,9 +138,9 @@ def _fake_sisal_payload():
         ],
         "infoAggiuntivaMap": {
             "100-500-3-0": {"stato": 1, "soglia": "", "esitoList": [
-                {"descrizione": "1", "quota": 185, "stato": 1},
-                {"descrizione": "X", "quota": 360, "stato": 1},
-                {"descrizione": "2", "quota": 420, "stato": 1},
+                {"descrizione": "1", "quota": 185, "stato": 1, "selectionId": 999001},
+                {"descrizione": "X", "quota": 360, "stato": 1, "selectionId": 999002},
+                {"descrizione": "2", "quota": 420, "stato": 1, "selectionId": 999003},
             ]},
             "100-500-28319-0": {"stato": 1, "soglia": "", "esitoList": [
                 {"descrizione": "1X", "quota": 125, "stato": 1},
@@ -235,33 +235,36 @@ class SisalTest(unittest.TestCase):
         self.assertEqual(inter_milan["date"], "2026-11-20")
         self.assertEqual(inter_milan["time"], "19:45")
         q = inter_milan["quotes"]
-        self.assertEqual(q["R:1"], 1.85)
-        self.assertEqual(q["R:X"], 3.60)
-        self.assertEqual(q["R:2"], 4.20)
-        self.assertEqual(q["R:1X"], 1.25)
-        self.assertEqual(q["R:X2"], 1.70)
-        self.assertEqual(q["R:12"], 1.40)
-        self.assertEqual(q["BTTS:Y"], 1.65)
-        self.assertEqual(q["BTTS:N"], 2.20)
-        self.assertEqual(q["TG:O1.5"], 1.10)
-        self.assertEqual(q["TG:O2.5"], 1.80)
-        self.assertEqual(q["TG:U3.5"], 1.60)
+        self.assertEqual(q["R:1"]["odds"], 1.85)
+        self.assertEqual(q["R:X"]["odds"], 3.60)
+        self.assertEqual(q["R:2"]["odds"], 4.20)
+        self.assertEqual(q["R:1X"]["odds"], 1.25)
+        self.assertEqual(q["R:X2"]["odds"], 1.70)
+        self.assertEqual(q["R:12"]["odds"], 1.40)
+        self.assertEqual(q["BTTS:Y"]["odds"], 1.65)
+        self.assertEqual(q["BTTS:N"]["odds"], 2.20)
+        self.assertEqual(q["TG:O1.5"]["odds"], 1.10)
+        self.assertEqual(q["TG:O2.5"]["odds"], 1.80)
+        self.assertEqual(q["TG:U3.5"]["odds"], 1.60)
         # 3 (1X2) + 3 (DC) + 2 (BTTS) + 2*3 (U/O 1.5/2.5/3.5) + 1 (MGT:1-3) = 15;
         # U/O 5.5 scartato (linea fuori catalogo)
         self.assertEqual(len(q), 15)
-        self.assertEqual(q["MGT:1-3"], 1.50)
+        self.assertEqual(q["MGT:1-3"]["odds"], 1.50)
 
         # esito sospeso (stato=0) non entra
-        self.assertEqual(juve_napoli["quotes"], {"R:1": 1.70, "R:X": 3.40})
+        self.assertEqual(sorted(juve_napoli["quotes"].keys()), ["R:1", "R:X"])
+        self.assertEqual(juve_napoli["quotes"]["R:1"]["odds"], 1.70)
+        self.assertEqual(juve_napoli["quotes"]["R:X"]["odds"], 3.40)
 
         m, nq = sisal.store(con, "it.1", events)
         self.assertEqual(m, 2)
         self.assertEqual(nq, 15 + 2)
         row = con.execute(
-            """SELECT o.odds FROM odds o JOIN matches m ON m.id = o.match_id
+            """SELECT o.odds, o.source_id FROM odds o JOIN matches m ON m.id = o.match_id
                JOIN teams h ON h.id = m.home_id
                WHERE h.name = 'Inter' AND o.selection = 'R:1'""").fetchone()
-        self.assertEqual(row[0], 1.85)
+        self.assertEqual(row["odds"], 1.85)
+        self.assertEqual(row["source_id"], "999001")  # selectionId Sisal
         # Comp e' il codice sisal della manifestazione, non il fallback it.1
         comp = con.execute(
             "SELECT comp FROM matches WHERE id = (SELECT MIN(id) FROM matches)"
