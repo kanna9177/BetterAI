@@ -131,14 +131,17 @@ def create_app(db_path=db.DEFAULT_PATH):
         for r in rows:
             cc = r["comp"] or "altro"
             groups_tmp.setdefault(cc, []).append(r)
-        groups = dict(sorted(groups_tmp.items(),
-                             key=lambda kv: sisal.comp_sort_key(kv[0])))
-        # TOP SCOMMESSE: prime 10 partite ordinate per IMPORTANZA della competizione
-        # (come fa Sisal). Nations League 20:45 prima di Bayswater 08:30.
-        top = sorted(
-            rows,
-            key=lambda r: (sisal.comp_sort_key(r["comp"]), r["time"] or "99:99"),
-        )[:10]
+        sorted_comps = sorted(groups_tmp.keys(), key=sisal.comp_sort_key)
+        # TOP SCOMMESSE: la competizione piu' importante del giorno viene messa
+        # in evidenza in cima. Le partite sono rimosse dai 'groups' sotto per
+        # non duplicarle — esattamente come fa Sisal (quando apri Calcio,
+        # Nations League e' espansa sopra e sotto ci sono le altre leghe).
+        top = []
+        top_comp = None
+        if sorted_comps:
+            top_comp = sorted_comps[0]
+            top = groups_tmp.pop(top_comp)
+        groups = dict((c, groups_tmp[c]) for c in sorted_comps if c in groups_tmp)
         # schedine AI del giorno per sidebar
         slips_today = c.execute(
             """SELECT * FROM slips WHERE date = ? ORDER BY id DESC LIMIT 6""",
@@ -147,8 +150,8 @@ def create_app(db_path=db.DEFAULT_PATH):
         active_day = day or "tutti"
         return render_template("oggi.html",
                                day=day, active_day=active_day,
-                               groups=groups, top=top, slips_today=slips_today,
-                               active="oggi")
+                               groups=groups, top=top, top_comp=top_comp,
+                               slips_today=slips_today, active="oggi")
 
     @app.route("/partita/<int:match_id>")
     def partita(match_id):
