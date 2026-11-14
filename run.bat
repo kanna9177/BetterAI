@@ -52,6 +52,18 @@ if not exist data\betterai.db (
     %PY% -m betterai sync
 )
 
+rem Auto-refresh quote se abbiamo un curl fresco o un dump json salvato.
+rem Priorita' al curl (quote live), poi fallback al json salvato.
+if exist curl.txt (
+    echo.
+    echo   [i] trovato curl.txt: ri-sincronizzo quote Sisal ^(migra db se serve^)...
+    %PY% -m betterai sisal-sync --curl curl.txt
+) else if exist sisal.json (
+    echo.
+    echo   [i] trovato sisal.json: ri-sincronizzo quote Sisal ^(migra db se serve^)...
+    %PY% -m betterai sisal-sync --json sisal.json
+)
+
 echo.
 echo   [2/3] apro il browser...
 start "" "http://127.0.0.1:5000"

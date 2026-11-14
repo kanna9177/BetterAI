@@ -313,11 +313,14 @@ def parse_events(payload):
     return out
 
 
-# Backward-compat: alcuni test passano 'comp' come primo positional dopo con.
 def store(con, comp_fallback, events, source="sisal"):
     """Upsert partita + quote. Ogni evento usa come 'comp' il codice di
     manifestazione sisal (sisal:<N>) se presente, altrimenti comp_fallback.
-    Ritorna (partite, quote) scritte."""
+
+    MIGRAZIONE IN LOCO: se esiste gia' una partita con stesse (date, home, away)
+    ma comp diverso E senza risultato, aggiorna il suo comp al nuovo codice
+    (le quote agganciate restano). Elimina eventuali duplicati creati da run
+    precedenti del parser vecchio. Ritorna (partite, quote) scritte."""
     n_matches = n_quotes = 0
     for ev in events:
         if not ev["home"] or not ev["away"] or not ev["date"]:
@@ -327,15 +330,43 @@ def store(con, comp_fallback, events, source="sisal"):
         season = _season_of(ev["date"])
         cm = ev.get("codice_manifestazione")
         comp = f"sisal:{cm}" if cm else comp_fallback
-        con.execute(
-            """INSERT INTO matches(comp, season, date, time, home_id, away_id)
-               VALUES (?,?,?,?,?,?)
-               ON CONFLICT(comp, season, home_id, away_id) DO UPDATE SET
-                 date=excluded.date, time=excluded.time""",
-            (comp, season, ev["date"], ev["time"], hid, aid))
-        mid = con.execute(
-            "SELECT id FROM matches WHERE comp=? AND season=? AND home_id=? AND away_id=?",
-            (comp, season, hid, aid)).fetchone()[0]
+
+        # 1. cerca un match esistente con stesse squadre+data senza risultato
+        #    (preferisci uno col comp giusto se c'e', altrimenti uno qualunque).
+        existing = con.execute(
+            """SELECT id, comp FROM matches
+               WHERE home_id=? AND away_id=? AND date=? AND hg IS NULL
+               ORDER BY (comp = ?) DESC, id ASC
+               LIMIT 1""",
+            (hid, aid, ev["date"], comp)).fetchone()
+
+        if existing and existing["comp"] != comp:
+            # migra: elimina eventuale conflitto che occupa gia' la coppia
+            # (comp, season, home, away) e aggiorna la riga esistente.
+            con.execute(
+                """DELETE FROM matches WHERE comp=? AND season=? AND home_id=? AND away_id=?
+                   AND id != ? AND hg IS NULL""",
+                (comp, season, hid, aid, existing["id"]))
+            con.execute(
+                "UPDATE matches SET comp=?, season=?, time=? WHERE id=?",
+                (comp, season, ev["time"], existing["id"]))
+            mid = existing["id"]
+        elif existing:
+            # stesso comp, aggiorna solo time
+            con.execute("UPDATE matches SET time=? WHERE id=?",
+                        (ev["time"], existing["id"]))
+            mid = existing["id"]
+        else:
+            con.execute(
+                """INSERT INTO matches(comp, season, date, time, home_id, away_id)
+                   VALUES (?,?,?,?,?,?)
+                   ON CONFLICT(comp, season, home_id, away_id) DO UPDATE SET
+                     date=excluded.date, time=excluded.time""",
+                (comp, season, ev["date"], ev["time"], hid, aid))
+            mid = con.execute(
+                "SELECT id FROM matches WHERE comp=? AND season=? AND home_id=? AND away_id=?",
+                (comp, season, hid, aid)).fetchone()[0]
+
         n_matches += 1
         for sel, price in ev["quotes"].items():
             con.execute(
