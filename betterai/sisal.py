@@ -54,6 +54,55 @@ from collections import defaultdict
 
 from .db import team_id
 
+# Mappa codiceManifestazione -> (sigla, descrizione) estratta dalla risposta
+# alberaturaPrematch. Si aggiorna con `python -m betterai sisal-manifestazioni --json ...`.
+_MANI_PATH = os.path.join(os.path.dirname(__file__), "sisal_manifestazioni.json")
+
+
+def _load_manifestazioni():
+    try:
+        with open(_MANI_PATH, encoding="utf-8") as f:
+            raw = json.load(f)
+        return {int(k): tuple(v) for k, v in raw.items()}
+    except FileNotFoundError:
+        return {}
+
+
+MANIFESTAZIONI = _load_manifestazioni()
+
+
+def comp_label(sisal_code):
+    """f'sisal:<N>' -> ('SIGLA', 'Nome leggibile')."""
+    if not sisal_code or not sisal_code.startswith("sisal:"):
+        return ("", sisal_code or "")
+    try:
+        n = int(sisal_code.split(":", 1)[1])
+    except ValueError:
+        return ("", sisal_code)
+    return MANIFESTAZIONI.get(n, ("", f"Manifestazione {n}"))
+
+
+def update_manifestazioni_from_alberatura(payload):
+    """Aggiorna il file di mapping dalla risposta alberaturaPrematch."""
+    global MANIFESTAZIONI
+    out = {}
+    for k, v in (payload.get("manifestazioneMap") or {}).items():
+        cm = v.get("codiceManifestazione")
+        desc = (v.get("descrizione") or "").strip()
+        if cm is None or not desc:
+            continue
+        parts = desc.split(None, 1)
+        if len(parts) == 2 and len(parts[0]) == 3 and parts[0].isupper():
+            cc, name = parts
+        else:
+            cc, name = "", desc
+        out[cm] = (cc, name)
+    with open(_MANI_PATH, "w", encoding="utf-8") as f:
+        json.dump({str(k): list(v) for k, v in sorted(out.items())}, f,
+                  ensure_ascii=False, indent=1)
+    MANIFESTAZIONI = out
+    return len(out)
+
 SISAL_BASE = os.environ.get("SISAL_BASE", "https://betting.sisal.it")
 SISAL_PATH_TMPL = os.environ.get(
     "SISAL_PATH_TMPL",
@@ -258,13 +307,17 @@ def parse_events(payload):
             "time": time_part[:5] or None,
             "home": _team_name(home_raw),
             "away": _team_name(away_raw),
+            "codice_manifestazione": ev.get("codiceManifestazione"),
             "quotes": quotes,
         })
     return out
 
 
-def store(con, comp, events, source="sisal"):
-    """Upsert partita + quote. Ritorna (partite, quote) scritte."""
+# Backward-compat: alcuni test passano 'comp' come primo positional dopo con.
+def store(con, comp_fallback, events, source="sisal"):
+    """Upsert partita + quote. Ogni evento usa come 'comp' il codice di
+    manifestazione sisal (sisal:<N>) se presente, altrimenti comp_fallback.
+    Ritorna (partite, quote) scritte."""
     n_matches = n_quotes = 0
     for ev in events:
         if not ev["home"] or not ev["away"] or not ev["date"]:
@@ -272,6 +325,8 @@ def store(con, comp, events, source="sisal"):
         hid = team_id(con, ev["home"])
         aid = team_id(con, ev["away"])
         season = _season_of(ev["date"])
+        cm = ev.get("codice_manifestazione")
+        comp = f"sisal:{cm}" if cm else comp_fallback
         con.execute(
             """INSERT INTO matches(comp, season, date, time, home_id, away_id)
                VALUES (?,?,?,?,?,?)

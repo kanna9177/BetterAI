@@ -154,6 +154,18 @@ def cmd_sisal_probe(con, args):
               f"{len(e['quotes'])} quote")
 
 
+def cmd_sisal_manifestazioni(con, args):
+    """Aggiorna la mappa codice manifestazione -> nome leggibile a partire da
+    un dump della risposta alberaturaPrematch."""
+    con.close()
+    if not args.json:
+        print("fornire --json path/alberatura.json (o --curl per rifetch)")
+        return
+    payload = json.load(open(args.json, encoding="utf-8"))
+    n = sisal.update_manifestazioni_from_alberatura(payload)
+    print(f"salvate {n} manifestazioni in {sisal._MANI_PATH}")
+
+
 def cmd_diretta_probe(con, args):
     """Replay di un cURL verso diretta.it e salva la risposta grezza.
     Il formato non e' JSON: salviamo i bytes per poi scrivere il parser."""
@@ -242,6 +254,11 @@ def main(argv=None):
     p.add_argument("--port", type=int, default=5000)
     p.add_argument("--debug", action="store_true")
     p.set_defaults(fn=cmd_web)
+    p = sub.add_parser("sisal-manifestazioni",
+                       help="aggiorna la mappa codice manifestazione -> nome leggibile")
+    p.add_argument("--json", required=True,
+                   help="file con un dump della risposta alberaturaPrematch")
+    p.set_defaults(fn=cmd_sisal_manifestazioni)
     p = sub.add_parser("diretta-probe",
                        help="replay di un cURL diretta.it e salva la risposta grezza")
     p.add_argument("--curl", required=True, help="file con 'Copy as cURL (bash)' da DevTools")

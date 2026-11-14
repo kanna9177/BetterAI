@@ -53,6 +53,8 @@ def create_app(db_path=db.DEFAULT_PATH):
             return ("", "")
         if code in COMP_LABELS:
             return COMP_LABELS[code]
+        if code.startswith("sisal:"):
+            return sisal.comp_label(code)
         # fallback: "en.2" -> ("ENG", "Serie 2"), or just raw
         if "." in code:
             cc, _, num = code.partition(".")

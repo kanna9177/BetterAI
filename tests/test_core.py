@@ -120,6 +120,7 @@ def _fake_sisal_payload():
             {
                 "descrizione": "F.C. Internazionale - A.C. Milan",
                 "data": "2026-11-20T19:45:00.000Z",
+                "codiceManifestazione": 209,  # ITA Serie A
                 "scommessaKeyDataList": [
                     {"codiceScommessa": 3,     "key": "100-500-3"},
                     {"codiceScommessa": 28319, "key": "100-500-28319"},
@@ -131,6 +132,7 @@ def _fake_sisal_payload():
             {
                 "descrizione": "Juventus - Napoli",
                 "data": "2026-11-21T14:00:00.000Z",
+                "codiceManifestazione": 209,
                 "scommessaKeyDataList": [{"codiceScommessa": 3, "key": "100-501-3"}],
             },
         ],
@@ -179,6 +181,17 @@ def _fake_sisal_payload():
 
 
 class SisalTest(unittest.TestCase):
+    def test_comp_label(self):
+        # Codice Serie A noto (dal file sisal_manifestazioni.json)
+        cc, name = sisal.comp_label("sisal:209")
+        self.assertEqual(cc, "ITA")
+        self.assertIn("Serie A", name)
+        # Codice non noto -> fallback
+        self.assertEqual(sisal.comp_label("sisal:999999"),
+                         ("", "Manifestazione 999999"))
+        # Codice non sisal
+        self.assertEqual(sisal.comp_label("it.1"), ("", "it.1"))
+
     def test_translate_outcome(self):
         t = sisal.translate_outcome
         self.assertEqual(t(sisal.MARKET_1X2, "1", ""), "R:1")
@@ -249,6 +262,11 @@ class SisalTest(unittest.TestCase):
                JOIN teams h ON h.id = m.home_id
                WHERE h.name = 'Inter' AND o.selection = 'R:1'""").fetchone()
         self.assertEqual(row[0], 1.85)
+        # Comp e' il codice sisal della manifestazione, non il fallback it.1
+        comp = con.execute(
+            "SELECT comp FROM matches WHERE id = (SELECT MIN(id) FROM matches)"
+        ).fetchone()[0]
+        self.assertEqual(comp, "sisal:209")
         # re-store aggiorna invece di duplicare
         sisal.store(con, "it.1", events)
         self.assertEqual(
