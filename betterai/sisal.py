@@ -60,15 +60,26 @@ _MANI_PATH = os.path.join(os.path.dirname(__file__), "sisal_manifestazioni.json"
 
 
 def _load_manifestazioni():
+    """Formato file: {codice: [cc, name, posizione?, top?]}."""
     try:
         with open(_MANI_PATH, encoding="utf-8") as f:
             raw = json.load(f)
-        return {int(k): tuple(v) for k, v in raw.items()}
     except FileNotFoundError:
         return {}
+    out = {}
+    for k, v in raw.items():
+        # back-compat: v puo' essere [cc, name] (2) o [cc, name, pos, top] (4)
+        cc = v[0] if len(v) > 0 else ""
+        name = v[1] if len(v) > 1 else ""
+        pos = v[2] if len(v) > 2 else 9999
+        top = bool(v[3]) if len(v) > 3 else False
+        out[int(k)] = (cc, name, pos, top)
+    return out
 
 
 MANIFESTAZIONI = _load_manifestazioni()
+
+_UNKNOWN_SORT_KEY = (True, 99999, "")  # not-top, pos tardissimo => in fondo
 
 
 def comp_label(sisal_code):
@@ -79,11 +90,32 @@ def comp_label(sisal_code):
         n = int(sisal_code.split(":", 1)[1])
     except ValueError:
         return ("", sisal_code)
-    return MANIFESTAZIONI.get(n, ("", f"Manifestazione {n}"))
+    meta = MANIFESTAZIONI.get(n)
+    if meta:
+        return (meta[0], meta[1])
+    return ("", f"Manifestazione {n}")
+
+
+def comp_sort_key(sisal_code):
+    """Chiave di ordinamento stile Sisal: top prima, poi posizione ASC, poi nome.
+    Non conosciuti vanno in fondo."""
+    if not sisal_code or not sisal_code.startswith("sisal:"):
+        return _UNKNOWN_SORT_KEY
+    try:
+        n = int(sisal_code.split(":", 1)[1])
+    except ValueError:
+        return _UNKNOWN_SORT_KEY
+    meta = MANIFESTAZIONI.get(n)
+    if not meta:
+        return _UNKNOWN_SORT_KEY
+    cc, name, pos, top = meta
+    # top True deve venire prima: ordina come (NOT top, pos, name)
+    return (not top, pos, f"{cc} {name}")
 
 
 def update_manifestazioni_from_alberatura(payload):
-    """Aggiorna il file di mapping dalla risposta alberaturaPrematch."""
+    """Aggiorna il file di mapping dalla risposta alberaturaPrematch.
+    Salva anche posizione e topManifestazione per l'ordinamento stile Sisal."""
     global MANIFESTAZIONI
     out = {}
     for k, v in (payload.get("manifestazioneMap") or {}).items():
@@ -96,7 +128,8 @@ def update_manifestazioni_from_alberatura(payload):
             cc, name = parts
         else:
             cc, name = "", desc
-        out[cm] = (cc, name)
+        out[cm] = (cc, name, v.get("posizione", 9999),
+                   bool(v.get("topManifestazione")))
     with open(_MANI_PATH, "w", encoding="utf-8") as f:
         json.dump({str(k): list(v) for k, v in sorted(out.items())}, f,
                   ensure_ascii=False, indent=1)

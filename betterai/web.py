@@ -104,11 +104,13 @@ def create_app(db_path=db.DEFAULT_PATH):
                 FROM matches m
                 JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
                 {where} ORDER BY m.date, m.time, m.id""", (day_arg,)).fetchall()
-        # Raggruppa per comp
-        groups = {}
+        # Raggruppa per comp e ordina stile Sisal (top prima, poi per posizione).
+        groups_tmp = {}
         for r in rows:
             cc = r["comp"] or "altro"
-            groups.setdefault(cc, []).append(r)
+            groups_tmp.setdefault(cc, []).append(r)
+        groups = dict(sorted(groups_tmp.items(),
+                             key=lambda kv: sisal.comp_sort_key(kv[0])))
         # TOP SCOMMESSE = prime 6 partite della competizione piu' popolosa, altrimenti prime 6 globali
         top = rows[:6] if rows else []
         # schedine AI del giorno per sidebar

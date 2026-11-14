@@ -1,1670 +1,2504 @@
 {
  "5": [
   "ITA",
-  "Coppa Italia"
+  "Coppa Italia",
+  2,
+  false
  ],
  "9": [
   "MEX",
-  "Primera Division"
+  "Primera Division",
+  999,
+  false
  ],
  "19": [
   "CHI",
-  "Coppa del Cile"
+  "Coppa del Cile",
+  999,
+  false
  ],
  "23": [
   "USA",
-  "W League"
+  "W League",
+  999,
+  false
  ],
  "36": [
   "SLO",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "42": [
   "AUS",
-  "A-League"
+  "A-League",
+  999,
+  false
  ],
  "46": [
   "GER",
-  "DFB Pokal"
+  "DFB Pokal",
+  141,
+  false
  ],
  "76": [
   "ITA",
-  "Serie B"
+  "Serie B",
+  9,
+  false
  ],
  "96": [
   "SVK",
-  "2. Liga"
+  "2. Liga",
+  999,
+  false
  ],
  "102": [
   "FRA",
-  "Campionato U19"
+  "Campionato U19",
+  132,
+  false
  ],
  "103": [
   "NOR",
-  "1. Division"
+  "1. Division",
+  999,
+  false
  ],
  "106": [
   "ESP",
-  "I Divisione F"
+  "I Divisione F",
+  121,
+  false
  ],
  "114": [
   "JPN",
-  "J-League"
+  "J-League",
+  999,
+  false
  ],
  "115": [
   "NED",
-  "Eredivisie"
+  "Eredivisie",
+  220,
+  false
  ],
  "127": [
   "TUR",
-  "Superlig"
+  "Superlig",
+  999,
+  false
  ],
  "128": [
   "SCO",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "135": [
   "COL",
-  "Primera A"
+  "Primera A",
+  999,
+  false
  ],
  "136": [
   "EGY",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "142": [
   "ARG",
-  "Primera B Nacional"
+  "Primera B Nacional",
+  999,
+  false
  ],
  "151": [
   "GEO",
-  "Erovnuli Liga"
+  "Erovnuli Liga",
+  999,
+  false
  ],
  "155": [
   "JPN",
-  "IV Divisione"
+  "IV Divisione",
+  999,
+  false
  ],
  "157": [
   "SCO",
-  "Premiership"
+  "Premiership",
+  999,
+  false
  ],
  "162": [
   "INT",
-  "Copa Libertadores"
+  "Copa Libertadores",
+  50,
+  false
  ],
  "169": [
   "INT",
-  "Speciali Calcio"
+  "Speciali Calcio",
+  900,
+  false
  ],
  "170": [
   "USA",
-  "MLS"
+  "MLS",
+  999,
+  false
  ],
  "183": [
   "ENG",
-  "FA Trophy"
+  "FA Trophy",
+  110,
+  false
  ],
  "185": [
   "COL",
-  "Primera B"
+  "Primera B",
+  999,
+  false
  ],
  "187": [
   "TUR",
-  "2. Lig"
+  "2. Lig",
+  999,
+  false
  ],
  "192": [
   "GRE",
-  "Super League"
+  "Super League",
+  999,
+  false
  ],
  "199": [
   "USA",
-  "USL Championship"
+  "USL Championship",
+  999,
+  false
  ],
  "204": [
   "NOR",
-  "Eliteserien"
+  "Eliteserien",
+  999,
+  false
  ],
  "209": [
   "ITA",
-  "Serie A"
+  "Serie A",
+  13,
+  true
  ],
  "210": [
   "INT",
-  "Europa League"
+  "Europa League",
+  3,
+  false
  ],
  "223": [
   "FRA",
-  "Coupe de France"
+  "Coupe de France",
+  131,
+  false
  ],
  "228": [
   "GER",
-  "Bundesliga"
+  "Bundesliga",
+  7,
+  false
  ],
  "248": [
   "ENG",
-  "League One"
+  "League One",
+  111,
+  false
  ],
  "272": [
   "DEN",
-  "2nd Division"
+  "2nd Division",
+  999,
+  false
  ],
  "279": [
   "CRC",
-  "Segunda Division"
+  "Segunda Division",
+  999,
+  false
  ],
  "291": [
   "GER",
-  "Bundesliga F"
+  "Bundesliga F",
+  142,
+  false
  ],
  "296": [
   "ESP",
-  "Copa del Rey"
+  "Copa del Rey",
+  121,
+  false
  ],
  "298": [
   "BRN",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "304": [
   "ESA",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "318": [
   "AUT",
-  "IV Divisione"
+  "IV Divisione",
+  999,
+  false
  ],
  "322": [
   "GHA",
-  "Premier League"
+  "Premier League",
+  999,
+  false
  ],
  "329": [
   "INT",
-  "Europei"
+  "Europei",
+  6,
+  false
  ],
  "331": [
   "ENG",
-  "Premier League"
+  "Premier League",
+  6,
+  false
  ],
  "345": [
   "POL",
-  "II Liga"
+  "II Liga",
+  999,
+  false
  ],
  "351": [
   "INT",
-  "Copa Sudamericana"
+  "Copa Sudamericana",
+  50,
+  false
  ],
  "352": [
   "BEL",
-  "Pro League"
+  "Pro League",
+  999,
+  false
  ],
  "356": [
   "NED",
-  "Topklasse"
+  "Topklasse",
+  222,
+  false
  ],
  "364": [
   "FRA",
-  "IV Divisione"
+  "IV Divisione",
+  132,
+  false
  ],
  "373": [
   "PER",
-  "Primera Division"
+  "Primera Division",
+  999,
+  false
  ],
  "379": [
   "POL",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "401": [
   "GRE",
-  "Football League"
+  "Football League",
+  999,
+  false
  ],
  "406": [
   "COL",
-  "Copa Colombia"
+  "Copa Colombia",
+  999,
+  false
  ],
  "418": [
   "CZE",
-  "Ceskae Moravskos Liga"
+  "Ceskae Moravskos Liga",
+  999,
+  false
  ],
  "434": [
   "LAT",
-  "Virsliga"
+  "Virsliga",
+  999,
+  false
  ],
  "441": [
   "NED",
-  "I Divisione F"
+  "I Divisione F",
+  221,
+  false
  ],
  "445": [
   "CZE",
-  "1. Liga"
+  "1. Liga",
+  999,
+  false
  ],
  "451": [
   "UZB",
-  "Super League"
+  "Super League",
+  999,
+  false
  ],
  "458": [
   "CHI",
-  "Primera B"
+  "Primera B",
+  999,
+  false
  ],
  "493": [
   "SWE",
-  "II Divisione F"
+  "II Divisione F",
+  999,
+  false
  ],
  "497": [
   "SUI",
-  "Super League"
+  "Super League",
+  999,
+  false
  ],
  "506": [
   "ITA",
-  "Serie C"
+  "Serie C",
+  14,
+  true
  ],
  "510": [
   "SRB",
-  "Prva Liga"
+  "Prva Liga",
+  999,
+  false
  ],
  "523": [
   "PAN",
-  "LPF"
+  "LPF",
+  999,
+  false
  ],
  "529": [
   "ESP",
-  "Liga Adelante"
+  "Liga Adelante",
+  121,
+  false
  ],
  "541": [
   "AUT",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "552": [
   "CZE",
-  "Campionato U19"
+  "Campionato U19",
+  999,
+  false
  ],
  "570": [
   "ESP",
-  "Liga"
+  "Liga",
+  6,
+  false
  ],
  "579": [
   "JPN",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "583": [
   "BUL",
-  "Serie B"
+  "Serie B",
+  999,
+  false
  ],
  "594": [
   "ARG",
-  "Primera C"
+  "Primera C",
+  999,
+  false
  ],
  "595": [
   "ENG",
-  "League Two"
+  "League Two",
+  111,
+  false
  ],
  "602": [
   "SCO",
-  "League Two"
+  "League Two",
+  999,
+  false
  ],
  "611": [
   "JPN",
-  "J-League 2"
+  "J-League 2",
+  999,
+  false
  ],
  "616": [
   "ARG",
-  "Copa Argentina"
+  "Copa Argentina",
+  999,
+  false
  ],
  "628": [
   "CMR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "631": [
   "WAL",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "632": [
   "ARG",
-  "Primera B Metropolitana"
+  "Primera B Metropolitana",
+  999,
+  false
  ],
  "644": [
   "SCO",
-  "League One"
+  "League One",
+  999,
+  false
  ],
  "649": [
   "ENG",
-  "VII Divisione"
+  "VII Divisione",
+  112,
+  false
  ],
  "656": [
   "BRA",
-  "Pernambucano"
+  "Pernambucano",
+  999,
+  false
  ],
  "666": [
   "CRO",
-  "Coppa di Croazia"
+  "Coppa di Croazia",
+  999,
+  false
  ],
  "689": [
   "ITA",
-  "Serie A Femminile"
+  "Serie A Femminile",
+  31,
+  false
  ],
  "699": [
   "URU",
-  "Segunda Division"
+  "Segunda Division",
+  999,
+  false
  ],
  "706": [
   "MEX",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "710": [
   "POR",
-  "Segunda Liga"
+  "Segunda Liga",
+  230,
+  false
  ],
  "716": [
   "ITA",
-  "Serie D"
+  "Serie D",
+  30,
+  false
  ],
  "762": [
   "ENG",
-  "National League"
+  "National League",
+  112,
+  false
  ],
  "765": [
   "INT",
-  "Amichevoli Nazionali"
+  "Amichevoli Nazionali",
+  11,
+  true
  ],
  "766": [
   "SVK",
-  "III Divisione"
+  "III Divisione",
+  999,
+  false
  ],
  "770": [
   "POR",
-  "Primeira Liga"
+  "Primeira Liga",
+  230,
+  false
  ],
  "776": [
   "BRA",
-  "Serie B"
+  "Serie B",
+  999,
+  false
  ],
  "781": [
   "FRA",
-  "Ligue 1"
+  "Ligue 1",
+  8,
+  false
  ],
  "809": [
   "SCO",
-  "Championship"
+  "Championship",
+  999,
+  false
  ],
  "810": [
   "CHI",
-  "Segunda"
+  "Segunda",
+  999,
+  false
  ],
  "818": [
   "DEN",
-  "Series"
+  "Series",
+  999,
+  false
  ],
  "821": [
   "NGR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "825": [
   "ENG",
-  "II Divisione F"
+  "II Divisione F",
+  113,
+  false
  ],
  "828": [
   "JPN",
-  "J-League 3"
+  "J-League 3",
+  999,
+  false
  ],
  "836": [
   "UAE",
-  "Coppa di Lega"
+  "Coppa di Lega",
+  999,
+  false
  ],
  "841": [
   "ESP",
-  "Copa Federacion"
+  "Copa Federacion",
+  121,
+  false
  ],
  "846": [
   "SVK",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "855": [
   "JPN",
-  "J-League Cup"
+  "J-League Cup",
+  999,
+  false
  ],
  "856": [
   "INT",
-  "Champions League"
+  "Champions League",
+  2,
+  false
  ],
  "866": [
   "MNE",
-  "Druga Liga"
+  "Druga Liga",
+  999,
+  false
  ],
  "894": [
   "BEL",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "911": [
   "INT",
-  "Pallone d'Oro"
+  "Pallone d'Oro",
+  32,
+  false
  ],
  "919": [
   "ENG",
-  "I Divisione F"
+  "I Divisione F",
+  113,
+  false
  ],
  "922": [
   "INT",
-  "Mondiale 2030"
+  "Mondiale 2030",
+  1,
+  false
  ],
  "923": [
   "SUI",
-  "III Divisione"
+  "III Divisione",
+  999,
+  false
  ],
  "928": [
   "INT",
-  "Coppa d'Africa"
+  "Coppa d'Africa",
+  12,
+  true
  ],
  "932": [
   "SWE",
-  "Damallsvenskan"
+  "Damallsvenskan",
+  999,
+  false
  ],
  "934": [
   "FRA",
-  "I Divisione F"
+  "I Divisione F",
+  132,
+  false
  ],
  "946": [
   "INT",
-  "Calciomercato"
+  "Calciomercato",
+  10,
+  false
  ],
  "947": [
   "AUS",
-  "I League F"
+  "I League F",
+  999,
+  false
  ],
  "948": [
   "ESP",
-  "IV Divisione"
+  "IV Divisione",
+  123,
+  false
  ],
  "955": [
   "IRL",
-  "FAI Intermediate Cup"
+  "FAI Intermediate Cup",
+  999,
+  false
  ],
  "970": [
   "DEN",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "976": [
   "SVK",
-  "Superliga"
+  "Superliga",
+  999,
+  false
  ],
  "987": [
   "NED",
-  "Eerste Divisie"
+  "Eerste Divisie",
+  220,
+  false
  ],
  "988": [
   "HUN",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "993": [
   "CZE",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "1000": [
   "AUT",
-  "Regionalliga"
+  "Regionalliga",
+  999,
+  false
  ],
  "1008": [
   "BRA",
-  "Brasileirao"
+  "Brasileirao",
+  999,
+  false
  ],
  "1011": [
   "PER",
-  "Segunda Division"
+  "Segunda Division",
+  999,
+  false
  ],
  "1020": [
   "MAR",
-  "Botola Pro"
+  "Botola Pro",
+  999,
+  false
  ],
  "1026": [
   "ENG",
-  "Championship"
+  "Championship",
+  111,
+  false
  ],
  "1035": [
   "GUA",
-  "Liga Nacional"
+  "Liga Nacional",
+  999,
+  false
  ],
  "1040": [
   "URU",
-  "Primera Division"
+  "Primera Division",
+  999,
+  false
  ],
  "1049": [
   "INT",
-  "Qual. Euro U19"
+  "Qual. Euro U19",
+  16,
+  true
  ],
  "1050": [
   "FRA",
-  "Ligue 2"
+  "Ligue 2",
+  131,
+  false
  ],
  "1052": [
   "GER",
-  "2. Bundesliga"
+  "2. Bundesliga",
+  140,
+  false
  ],
  "1056": [
   "ENG",
-  "EFL Cup"
+  "EFL Cup",
+  111,
+  false
  ],
  "1082": [
   "DEN",
-  "Superligaen"
+  "Superligaen",
+  999,
+  false
  ],
  "1086": [
   "ESP",
-  "Segunda B"
+  "Segunda B",
+  122,
+  false
  ],
  "1091": [
   "BEL",
-  "III Divisione"
+  "III Divisione",
+  999,
+  false
  ],
  "1098": [
   "AUT",
-  "Bundesliga"
+  "Bundesliga",
+  999,
+  false
  ],
  "1108": [
   "WAL",
-  "FAW Cup"
+  "FAW Cup",
+  999,
+  false
  ],
  "1116": [
   "IND",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1131": [
   "SWE",
-  "Allsvenskan"
+  "Allsvenskan",
+  999,
+  false
  ],
  "1142": [
   "USA",
-  "USL League One"
+  "USL League One",
+  999,
+  false
  ],
  "1160": [
   "UKR",
-  "Persha Liga"
+  "Persha Liga",
+  999,
+  false
  ],
  "1171": [
   "ITA",
-  "Serie A"
+  "Serie A",
+  4,
+  true
  ],
  "1184": [
   "NZL",
-  "WBC F"
+  "WBC F",
+  999,
+  false
  ],
  "1197": [
   "TPE",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "1200": [
   "ITA",
-  "Serie A2"
+  "Serie A2",
+  22,
+  false
  ],
  "1204": [
   "POR",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1207": [
   "ESP",
-  "III Divisione"
+  "III Divisione",
+  999,
+  false
  ],
  "1211": [
   "ISR",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1224": [
   "DEN",
-  "Basketligaen"
+  "Basketligaen",
+  999,
+  false
  ],
  "1229": [
   "TUR",
-  "Super Ligi"
+  "Super Ligi",
+  999,
+  false
  ],
  "1232": [
   "GRE",
-  "A1"
+  "A1",
+  999,
+  false
  ],
  "1235": [
   "INT",
-  "Eurolega"
+  "Eurolega",
+  3,
+  true
  ],
  "1242": [
   "GEO",
-  "Superleague"
+  "Superleague",
+  999,
+  false
  ],
  "1252": [
   "LTU",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1257": [
   "SLO",
-  "Campionato SKL"
+  "Campionato SKL",
+  999,
+  false
  ],
  "1259": [
   "INT",
-  "Qual. Euro F"
+  "Qual. Euro F",
+  4,
+  false
  ],
  "1262": [
   "NOR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "1269": [
   "USA",
-  "NCAA"
+  "NCAA",
+  7,
+  false
  ],
  "1274": [
   "CRO",
-  "A1 Liga"
+  "A1 Liga",
+  999,
+  false
  ],
  "1292": [
   "LTU",
-  "Basketball League"
+  "Basketball League",
+  999,
+  false
  ],
  "1301": [
   "GER",
-  "Pro A"
+  "Pro A",
+  999,
+  false
  ],
  "1310": [
   "CZE",
-  "NBL"
+  "NBL",
+  999,
+  false
  ],
  "1335": [
   "BEL",
-  "Ethias League"
+  "Ethias League",
+  999,
+  false
  ],
  "1339": [
   "CYP",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "1353": [
   "TUR",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1367": [
   "ITA",
-  "Lnp Silver"
+  "Lnp Silver",
+  22,
+  false
  ],
  "1368": [
   "ISR",
-  "Winner Men League"
+  "Winner Men League",
+  999,
+  false
  ],
  "1379": [
   "INT",
-  "Adriatic League"
+  "Adriatic League",
+  5,
+  false
  ],
  "1398": [
   "FRA",
-  "Ligue Nationale"
+  "Ligue Nationale",
+  999,
+  true
  ],
  "1412": [
   "AUS",
-  "NBL"
+  "NBL",
+  999,
+  false
  ],
  "1413": [
   "ARG",
-  "Liga Nacional De Basquet"
+  "Liga Nacional De Basquet",
+  999,
+  false
  ],
  "1427": [
   "SUI",
-  "LNA"
+  "LNA",
+  999,
+  false
  ],
  "1435": [
   "FIN",
-  "Korisliiga"
+  "Korisliiga",
+  999,
+  false
  ],
  "1441": [
   "INT",
-  "Eurocup"
+  "Eurocup",
+  4,
+  true
  ],
  "1457": [
   "POL",
-  "PLK"
+  "PLK",
+  999,
+  false
  ],
  "1479": [
   "BRA",
-  "NBB"
+  "NBB",
+  999,
+  false
  ],
  "1482": [
   "SVK",
-  "Extraliga"
+  "Extraliga",
+  999,
+  false
  ],
  "1489": [
   "QAT",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "1513": [
   "POR",
-  "LBP"
+  "LBP",
+  999,
+  false
  ],
  "1518": [
   "AUT",
-  "Bundesliga"
+  "Bundesliga",
+  999,
+  false
  ],
  "1519": [
   "USA",
-  "NBA"
+  "NBA",
+  2,
+  true
  ],
  "1526": [
   "BUL",
-  "NBL"
+  "NBL",
+  999,
+  false
  ],
  "1530": [
   "AUS",
-  "WNBL F"
+  "WNBL F",
+  999,
+  false
  ],
  "1546": [
   "BRA",
-  "Paulista I Divisione F"
+  "Paulista I Divisione F",
+  999,
+  false
  ],
  "1548": [
   "KOS",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "1550": [
   "POL",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "1555": [
   "GER",
-  "BBL Bundesliga"
+  "BBL Bundesliga",
+  999,
+  true
  ],
  "1577": [
   "ESP",
-  "Liga ACB"
+  "Liga ACB",
+  999,
+  true
  ],
  "1598": [
   "HUN",
-  "NB 1.A"
+  "NB 1.A",
+  999,
+  false
  ],
  "1613": [
   "ITF",
-  "Canada"
+  "Canada",
+  300,
+  false
  ],
  "1630": [
   "ATP",
-  "Finals"
+  "Finals",
+  100,
+  true
  ],
  "1633": [
   "",
-  "Coppa Davis"
+  "Coppa Davis",
+  105,
+  false
  ],
  "1634": [
   "",
-  "Roland Garros"
+  "Roland Garros",
+  4,
+  false
  ],
  "1635": [
   "ITF",
-  "Messico"
+  "Messico",
+  300,
+  false
  ],
  "1678": [
   "ITF",
-  "Tunisia"
+  "Tunisia",
+  300,
+  false
  ],
  "1681": [
   "",
-  "US Open"
+  "US Open",
+  2,
+  false
  ],
  "1683": [
   "ATP",
-  "Stoccolma"
+  "Stoccolma",
+  100,
+  true
  ],
  "1684": [
   "",
-  "Challenger Perù"
+  "Challenger Perù",
+  200,
+  false
  ],
  "1696": [
   "",
-  "Challenger USA"
+  "Challenger USA",
+  200,
+  false
  ],
  "1699": [
   "",
-  "Challenger Australia"
+  "Challenger Australia",
+  200,
+  false
  ],
  "1716": [
   "ITF",
-  "Argentina"
+  "Argentina",
+  300,
+  false
  ],
  "1766": [
   "",
-  "Wimbledon"
+  "Wimbledon",
+  3,
+  false
  ],
  "1773": [
   "ITF",
-  "Spagna"
+  "Spagna",
+  300,
+  false
  ],
  "1775": [
   "",
-  "Challenger Francia"
+  "Challenger Francia",
+  200,
+  false
  ],
  "1787": [
   "",
-  "Challenger Colombia"
+  "Challenger Colombia",
+  200,
+  false
  ],
  "1819": [
   "ITF",
-  "Brasile"
+  "Brasile",
+  300,
+  false
  ],
  "1822": [
   "ITF",
-  "Francia"
+  "Francia",
+  300,
+  false
  ],
  "1823": [
   "ITF",
-  "Grecia"
+  "Grecia",
+  300,
+  false
  ],
  "1824": [
   "ITF",
-  "Thailandia"
+  "Thailandia",
+  300,
+  false
  ],
  "1834": [
   "ITF",
-  "Egitto"
+  "Egitto",
+  300,
+  false
  ],
  "1848": [
   "INT",
-  "Speciali Tennis"
+  "Speciali Tennis",
+  7,
+  false
  ],
  "1910": [
   "ITF",
-  "Turchia"
+  "Turchia",
+  300,
+  false
  ],
  "1925": [
   "",
-  "Australian Open"
+  "Australian Open",
+  10,
+  false
  ],
  "1952": [
   "",
-  "Challenger Giappone"
+  "Challenger Giappone",
+  200,
+  false
  ],
  "2000": [
   "WTA",
-  "Finals"
+  "Finals",
+  5,
+  true
  ],
  "2006": [
   "ITF",
-  "Italia"
+  "Italia",
+  300,
+  false
  ],
  "2040": [
   "POR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "2042": [
   "SRB",
-  "Superliga"
+  "Superliga",
+  999,
+  false
  ],
  "2049": [
   "SUI",
-  "NLA"
+  "NLA",
+  999,
+  false
  ],
  "2053": [
   "USA",
-  "NCAA I Divisione F"
+  "NCAA I Divisione F",
+  999,
+  false
  ],
  "2061": [
   "CZE",
-  "Extraliga F"
+  "Extraliga F",
+  999,
+  false
  ],
  "2079": [
   "GRE",
-  "Serie A1 F"
+  "Serie A1 F",
+  999,
+  false
  ],
  "2081": [
   "NED",
-  "Eredivisie"
+  "Eredivisie",
+  999,
+  false
  ],
  "2086": [
   "FRA",
-  "Pro B"
+  "Pro B",
+  999,
+  false
  ],
  "2094": [
   "BEL",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2095": [
   "FRA",
-  "Ligue A"
+  "Ligue A",
+  999,
+  false
  ],
  "2111": [
   "POL",
-  "Liga Siatkowki F"
+  "Liga Siatkowki F",
+  999,
+  false
  ],
  "2117": [
   "ITA",
-  "Supercoppa"
+  "Supercoppa",
+  16,
+  true
  ],
  "2119": [
   "POL",
-  "Liga Siatkowki"
+  "Liga Siatkowki",
+  999,
+  false
  ],
  "2130": [
   "ITA",
-  "Serie A1 F"
+  "Serie A1 F",
+  18,
+  true
  ],
  "2143": [
   "BUL",
-  "Superliga"
+  "Superliga",
+  999,
+  false
  ],
  "2156": [
   "SRB",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2161": [
   "ITA",
-  "Serie A2 F"
+  "Serie A2 F",
+  20,
+  false
  ],
  "2170": [
   "TUR",
-  "TBL"
+  "TBL",
+  999,
+  false
  ],
  "2177": [
   "ITA",
-  "Serie A2"
+  "Serie A2",
+  13,
+  false
  ],
  "2185": [
   "ITA",
-  "Superlega"
+  "Superlega",
+  11,
+  true
  ],
  "2208": [
   "FIN",
-  "Miesten Liga"
+  "Miesten Liga",
+  999,
+  false
  ],
  "2238": [
   "GRE",
-  "Serie A1"
+  "Serie A1",
+  999,
+  false
  ],
  "2305": [
   "AUT",
-  "Bundesliga"
+  "Bundesliga",
+  999,
+  false
  ],
  "2318": [
   "AUT",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2336": [
   "SUI",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2361": [
   "ROU",
-  "Divizia A1"
+  "Divizia A1",
+  999,
+  false
  ],
  "2363": [
   "CZE",
-  "Extraliga"
+  "Extraliga",
+  999,
+  false
  ],
  "2382": [
   "CRO",
-  "I Liga"
+  "I Liga",
+  999,
+  false
  ],
  "2412": [
   "FRA",
-  "Ligue A F"
+  "Ligue A F",
+  999,
+  false
  ],
  "2430": [
   "NED",
-  "Eredivisie F"
+  "Eredivisie F",
+  999,
+  false
  ],
  "2432": [
   "GER",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2460": [
   "CRO",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "2490": [
   "BRA",
-  "Superliga"
+  "Superliga",
+  999,
+  false
  ],
  "2519": [
   "USA",
-  "AHL"
+  "AHL",
+  999,
+  false
  ],
  "2527": [
   "FIN",
-  "SM Liiga"
+  "SM Liiga",
+  999,
+  false
  ],
  "2528": [
   "GER",
-  "DEL"
+  "DEL",
+  999,
+  false
  ],
  "2533": [
   "ENG",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "2535": [
   "CAN",
-  "OHL U20"
+  "OHL U20",
+  999,
+  false
  ],
  "2538": [
   "CAN",
-  "WHL U20"
+  "WHL U20",
+  999,
+  false
  ],
  "2541": [
   "KAZ",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "2543": [
   "NOR",
-  "GET Ligaen"
+  "GET Ligaen",
+  999,
+  false
  ],
  "2544": [
   "FIN",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "2549": [
   "AUT",
-  "EHL"
+  "EHL",
+  999,
+  false
  ],
  "2552": [
   "INT",
-  "Mondiali F"
+  "Mondiali F",
+  3,
+  false
  ],
  "2553": [
   "NOR",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "2555": [
   "POL",
-  "Ekstraliga"
+  "Ekstraliga",
+  999,
+  false
  ],
  "2561": [
   "GER",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "2565": [
   "USA",
-  "NHL"
+  "NHL",
+  10,
+  true
  ],
  "2570": [
   "LAT",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "2584": [
   "SVK",
-  "Extraliga"
+  "Extraliga",
+  999,
+  false
  ],
  "2588": [
   "CZE",
-  "Extraliga"
+  "Extraliga",
+  999,
+  false
  ],
  "2589": [
   "SUI",
-  "NLA"
+  "NLA",
+  999,
+  false
  ],
  "2593": [
   "CZE",
-  "1. Liga"
+  "1. Liga",
+  999,
+  false
  ],
  "2617": [
   "SWE",
-  "SHL"
+  "SHL",
+  999,
+  false
  ],
  "2621": [
   "SWE",
-  "HockeyEttan"
+  "HockeyEttan",
+  999,
+  false
  ],
  "2625": [
   "FRA",
-  "Ligue Magnus"
+  "Ligue Magnus",
+  999,
+  false
  ],
  "2631": [
   "INT",
-  "Mondiale Formula1"
+  "Mondiale Formula1",
+  1,
+  true
  ],
  "2654": [
   "INT",
-  "Motomondiale"
+  "Motomondiale",
+  1,
+  true
  ],
  "2669": [
   "INT",
-  "Eurolega F"
+  "Eurolega F",
+  10,
+  false
  ],
  "2673": [
   "ITA",
-  "Serie A1"
+  "Serie A1",
+  29,
+  false
  ],
  "2686": [
   "ESP",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "2692": [
   "USA",
-  "NFL"
+  "NFL",
+  2,
+  false
  ],
  "2850": [
   "INT",
-  "World Cup"
+  "World Cup",
+  2,
+  false
  ],
  "2863": [
   "INT",
-  "Coppa America"
+  "Coppa America",
+  1,
+  false
  ],
  "2903": [
   "INT",
-  "Coppa del Mondo"
+  "Coppa del Mondo",
+  1,
+  false
  ],
  "2927": [
   "SWE",
-  "Elitserien"
+  "Elitserien",
+  999,
+  false
  ],
  "2936": [
   "DEN",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "2942": [
   "GER",
-  "Bundesliga"
+  "Bundesliga",
+  999,
+  false
  ],
  "2947": [
   "INT",
-  "EHF Champ. League F"
+  "EHF Champ. League F",
+  10,
+  false
  ],
  "2974": [
   "AUT",
-  "HLA"
+  "HLA",
+  999,
+  false
  ],
  "2998": [
   "FRA",
-  "Division 1"
+  "Division 1",
+  999,
+  false
  ],
  "3040": [
   "INT",
-  "EHF European League F"
+  "EHF European League F",
+  10,
+  false
  ],
  "3047": [
   "ESP",
-  "Liga Asobal"
+  "Liga Asobal",
+  100,
+  false
  ],
  "3055": [
   "DEN",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3071": [
   "GER",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "3084": [
   "DEN",
-  "II Divisione F"
+  "II Divisione F",
+  999,
+  false
  ],
  "3089": [
   "POL",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "3094": [
   "POR",
-  "LPA"
+  "LPA",
+  999,
+  false
  ],
  "3114": [
   "FRA",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "3121": [
   "CRO",
-  "Premier Liga"
+  "Premier Liga",
+  999,
+  false
  ],
  "3124": [
   "SLO",
-  "PRVA Liga"
+  "PRVA Liga",
+  999,
+  false
  ],
  "3132": [
   "POL",
-  "I Divisione F"
+  "I Divisione F",
+  999,
+  false
  ],
  "3176": [
   "ROU",
-  "Liga National"
+  "Liga National",
+  999,
+  false
  ],
  "3291": [
   "",
-  "Presidenziali USA"
+  "Presidenziali USA",
+  998,
+  false
  ],
  "3293": [
   "",
-  "Presidenziali Francia"
+  "Presidenziali Francia",
+  999,
+  false
  ],
  "3509": [
   "INT",
-  "Incontri Internazionali"
+  "Incontri Internazionali",
+  2,
+  false
  ],
  "3655": [
   "POR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3697": [
   "CZE",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3807": [
   "SWE",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3856": [
   "NOR",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3857": [
   "SWE",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "3861": [
   "FIN",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3862": [
   "SWE",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "3890": [
   "",
-  "Temperatura Italia"
+  "Temperatura Italia",
+  0,
+  false
  ],
  "3892": [
   "",
-  "X Factor"
+  "X Factor",
+  999,
+  false
  ],
  "3906": [
   "",
-  "Festival Sanremo"
+  "Festival Sanremo",
+  90,
+  false
  ],
  "3930": [
   "",
-  "Ballando con le Stelle"
+  "Ballando con le Stelle",
+  999,
+  false
  ],
  "3959": [
   "RSA",
-  "T20 Ram Slam"
+  "T20 Ram Slam",
+  999,
+  false
  ],
  "44339": [
   "INT",
-  "Amichevoli U23 (Poss. Cambio Format)"
+  "Amichevoli U23 (Poss. Cambio Format)",
+  70,
+  false
  ],
  "54098": [
   "INT",
-  "Champions League"
+  "Champions League",
+  5,
+  true
  ],
  "55292": [
   "INT",
-  "Alps Hockey League"
+  "Alps Hockey League",
+  4,
+  false
  ],
  "65328": [
   "ITF",
-  "USA"
+  "USA",
+  300,
+  false
  ],
  "66706": [
   "CHI",
-  "IV Divisione"
+  "IV Divisione",
+  999,
+  false
  ],
  "162816": [
   "INT",
-  "World Tour"
+  "World Tour",
+  999,
+  false
  ],
  "164574": [
   "MEX",
-  "Liga MX F"
+  "Liga MX F",
+  999,
+  false
  ],
  "185737": [
   "BRA",
-  "Cearense Coppa Fares Lopes"
+  "Cearense Coppa Fares Lopes",
+  999,
+  false
  ],
  "197995": [
   "",
-  "Grande Fratello VIP"
+  "Grande Fratello VIP",
+  999,
+  false
  ],
  "200814": [
   "FRA",
-  "LNB U21"
+  "LNB U21",
+  999,
+  false
  ],
  "223304": [
   "",
-  "Elezioni Spagna"
+  "Elezioni Spagna",
+  999,
+  false
  ],
  "223971": [
   "INT",
-  "Grand Slam of Darts"
+  "Grand Slam of Darts",
+  5,
+  false
  ],
  "268196": [
   "INT",
-  "BWF World Tour"
+  "BWF World Tour",
+  1,
+  false
  ],
  "275182": [
   "INT",
-  "Erste Liga"
+  "Erste Liga",
+  4,
+  false
  ],
  "293423": [
   "AUS",
-  "T20 Big Bash F"
+  "T20 Big Bash F",
+  999,
+  false
  ],
  "314388": [
   "INT",
-  "Nations League"
+  "Nations League",
+  1,
+  true
  ],
  "352646": [
   "PAR",
-  "Coppa"
+  "Coppa",
+  999,
+  false
  ],
  "368829": [
   "POR",
-  "Campionato U23"
+  "Campionato U23",
+  231,
+  false
  ],
  "381001": [
   "",
-  "Serie A"
+  "Serie A",
+  1,
+  false
  ],
  "381003": [
   "",
-  "NBA"
+  "NBA",
+  3,
+  false
  ],
  "382061": [
   "INT",
-  "CONCACAF Nations League"
+  "CONCACAF Nations League",
+  50,
+  false
  ],
  "408460": [
   "INT",
-  "Lega LEUBL"
+  "Lega LEUBL",
+  6,
+  false
  ],
  "410237": [
   "RSA",
-  "Camp. Riserve I Divisione"
+  "Camp. Riserve I Divisione",
+  999,
+  false
  ],
  "495391": [
   "ARU",
-  "I Divisione"
+  "I Divisione",
+  999,
+  false
  ],
  "532651": [
   "ITA",
-  "Serie A"
+  "Serie A",
+  1,
+  false
  ],
  "532653": [
   "GER",
-  "Bundesliga"
+  "Bundesliga",
+  3,
+  false
  ],
  "532654": [
   "FRA",
-  "Ligue 1"
+  "Ligue 1",
+  4,
+  false
  ],
  "532655": [
   "ESP",
-  "Liga"
+  "Liga",
+  5,
+  false
  ],
  "532656": [
   "INT",
-  "Champions League"
+  "Champions League",
+  6,
+  false
  ],
  "532657": [
   "INT",
-  "Europa League"
+  "Europa League",
+  7,
+  false
  ],
  "532658": [
   "INT",
-  "Conference League"
+  "Conference League",
+  8,
+  false
  ],
  "532659": [
   "ITA",
-  "Coppa Italia"
+  "Coppa Italia",
+  9,
+  false
  ],
  "534861": [
   "",
-  "Tutti Marcatori"
+  "Tutti Marcatori",
+  1,
+  false
  ],
  "534862": [
   "",
-  "Tutti Cartellino"
+  "Tutti Cartellino",
+  2,
+  false
  ],
  "534863": [
   "",
-  "Tutti Goal o Assist"
+  "Tutti Goal o Assist",
+  3,
+  false
  ],
  "534889": [
   "INT",
-  "Nations League"
+  "Nations League",
+  9,
+  false
  ],
  "626006": [
   "UAE",
-  "T10 League"
+  "T10 League",
+  999,
+  false
  ],
  "657746": [
   "INT",
-  "TT Cup"
+  "TT Cup",
+  5,
+  false
  ],
  "817507": [
   "SUI",
-  "II Divisione"
+  "II Divisione",
+  999,
+  false
  ],
  "908055": [
   "INT",
-  "Conference League"
+  "Conference League",
+  4,
+  false
  ],
  "931968": [
   "INT",
-  "WTT Contender Series"
+  "WTT Contender Series",
+  5,
+  false
  ],
  "1054688": [
   "INT",
-  "BNXT League"
+  "BNXT League",
+  7,
+  false
  ],
  "1170074": [
   "INT",
-  "World Cup F"
+  "World Cup F",
+  2,
+  false
  ],
  "1171271": [
   "",
-  "EMIRATI ARABI - T10 ABU DHABI"
+  "EMIRATI ARABI - T10 ABU DHABI",
+  0,
+  false
  ],
  "1177097": [
   "",
-  "Dubai Premier P1"
+  "Dubai Premier P1",
+  999,
+  false
  ],
  "1177337": [
   "TPE",
-  "TPBL"
+  "TPBL",
+  999,
+  false
  ],
  "1180278": [
   "AUS",
-  "Championship"
+  "Championship",
+  999,
+  false
  ],
  "1181599": [
   "INT",
-  "Nations Championship"
+  "Nations Championship",
+  4,
+  false
  ],
  "1182500": [
   "INT",
-  "World Rugby Nations Cup"
+  "World Rugby Nations Cup",
+  2,
+  false
  ],
  "1183539": [
   "IRL",
-  "III Divisione"
+  "III Divisione",
+  999,
+  false
  ],
  "3810013": [
   "ESP",
-  "Liga ACB"
+  "Liga ACB",
+  13,
+  false
  ],
  "3810014": [
   "FRA",
-  "Ligue Nationale"
+  "Ligue Nationale",
+  14,
+  false
  ],
  "3810015": [
   "GER",
-  "BBL Bundesliga"
+  "BBL Bundesliga",
+  15,
+  false
  ],
  "5322711": [
   "INT",
-  "Nations League"
+  "Nations League",
+  11,
+  false
  ],
  "5322713": [
   "INT",
-  "Amichevoli Nazionali"
+  "Amichevoli Nazionali",
+  13,
+  false
  ],
  "5322729": [
   "ITA",
-  "Serie C"
+  "Serie C",
+  29,
+  false
  ],
  "5322731": [
   "ESP",
-  "Liga Adelante"
+  "Liga Adelante",
+  31,
+  false
  ],
  "5322738": [
   "BRA",
-  "Brasileirao"
+  "Brasileirao",
+  38,
+  false
  ],
  "5322742": [
   "COL",
-  "Primera A"
+  "Primera A",
+  42,
+  false
  ],
  "5322748": [
   "MEX",
-  "Primera Division"
+  "Primera Division",
+  48,
+  false
  ],
  "5326511": [
   "ITA",
-  "Serie B"
+  "Serie B",
+  11,
+  false
  ],
  "5326512": [
   "ITA",
-  "Serie C"
+  "Serie C",
+  12,
+  false
  ],
  "5326516": [
   "ENG",
-  "Championship"
+  "Championship",
+  16,
+  false
  ],
  "5326517": [
   "ENG",
-  "Coppa di Lega"
+  "Coppa di Lega",
+  17,
+  false
  ],
  "5326523": [
   "ESP",
-  "Copa del Rey"
+  "Copa del Rey",
+  23,
+  false
  ],
  "5326528": [
   "FRA",
-  "Ligue 2"
+  "Ligue 2",
+  28,
+  false
  ],
  "5326529": [
   "GER",
-  "DFB Pokal"
+  "DFB Pokal",
+  29,
+  false
  ],
  "5326531": [
   "GER",
-  "2.Bundesliga"
+  "2.Bundesliga",
+  31,
+  false
  ],
  "5326533": [
   "INT",
-  "Nations League"
+  "Nations League",
+  33,
+  false
  ],
  "5326534": [
   "INT",
-  "Copa Libertadores"
+  "Copa Libertadores",
+  34,
+  false
  ],
  "5326535": [
   "INT",
-  "Copa Sudamericana"
+  "Copa Sudamericana",
+  35,
+  false
  ],
  "5326536": [
   "INT",
-  "Euro 2028"
+  "Euro 2028",
+  36,
+  false
  ],
  "5326540": [
   "INT",
-  "Mondiali 2030"
+  "Mondiali 2030",
+  40,
+  false
  ],
  "5326550": [
   "AUS",
-  "A-League"
+  "A-League",
+  50,
+  false
  ],
  "5326551": [
   "AUT",
-  "Bundesliga"
+  "Bundesliga",
+  51,
+  false
  ],
  "5326553": [
   "BEL",
-  "Pro League"
+  "Pro League",
+  53,
+  false
  ],
  "5326554": [
   "BRA",
-  "Brasilerao"
+  "Brasilerao",
+  54,
+  false
  ],
  "5326555": [
   "CZE",
-  "1. Liga"
+  "1. Liga",
+  55,
+  false
  ],
  "5326556": [
   "DEN",
-  "Superligaen"
+  "Superligaen",
+  56,
+  false
  ],
  "5326560": [
   "JPN",
-  "J-League"
+  "J-League",
+  60,
+  false
  ],
  "5326564": [
   "NED",
-  "Eredivisie"
+  "Eredivisie",
+  64,
+  false
  ],
  "5326567": [
   "NOR",
-  "Eliteserien"
+  "Eliteserien",
+  67,
+  false
  ],
  "5326570": [
   "POR",
-  "Primeira Liga"
+  "Primeira Liga",
+  70,
+  false
  ],
  "5326576": [
   "SCO",
-  "Premiership"
+  "Premiership",
+  76,
+  false
  ],
  "5326577": [
   "SUI",
-  "Super League"
+  "Super League",
+  77,
+  false
  ],
  "5326578": [
   "SWE",
-  "Allsvenskan"
+  "Allsvenskan",
+  78,
+  false
  ],
  "5326580": [
   "TUR",
-  "Superlig"
+  "Superlig",
+  80,
+  false
  ],
  "5326582": [
   "USA",
-  "MLS"
+  "MLS",
+  82,
+  false
  ],
  "5326583": [
   "",
-  "Australian Open"
+  "Australian Open",
+  83,
+  false
  ],
  "5326584": [
   "",
-  "Roland Garros"
+  "Roland Garros",
+  84,
+  false
  ],
  "5326585": [
   "",
-  "Wimbledon"
+  "Wimbledon",
+  85,
+  false
  ],
  "5326586": [
   "",
-  "US Open"
+  "US Open",
+  86,
+  false
  ],
  "5326588": [
   "",
-  "Coppa Davis"
+  "Coppa Davis",
+  88,
+  false
  ],
  "5326590": [
   "ATP",
-  "Finals"
+  "Finals",
+  90,
+  false
  ],
  "5326591": [
   "",
-  "NBA"
+  "NBA",
+  91,
+  false
  ],
  "5326592": [
   "",
-  "Eurolega"
+  "Eurolega",
+  92,
+  false
  ],
  "5326594": [
   "",
-  "Basket A1"
+  "Basket A1",
+  94,
+  false
  ],
  "5326595": [
   "",
-  "Liga ACB"
+  "Liga ACB",
+  95,
+  false
  ],
  "5326598": [
   "",
-  "NFL"
+  "NFL",
+  98,
+  false
  ],
  "53265105": [
   "",
-  "Volley A1"
+  "Volley A1",
+  105,
+  false
  ]
 }
