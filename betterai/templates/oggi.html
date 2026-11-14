@@ -1,53 +1,75 @@
 {% extends "base.html" %}
-{% block title %}palinsesto {{ day }}{% endblock %}
+{% block title %}palinsesto {{ day or 'tutti' }}{% endblock %}
 {% block main %}
-<div class="daybar">
-  <a class="btn" href="{{ url_for('oggi', date=prev_d) }}">&larr; {{ prev_d }}</a>
-  <h1>Palinsesto {{ day }}</h1>
-  <a class="btn" href="{{ url_for('oggi', date=next_d) }}">{{ next_d }} &rarr;</a>
+
+<div class="daytabs">
+  {% for t in day_tabs %}
+    <a href="{{ url_for('oggi') if t.date is none else url_for('oggi', date=t.date) }}"
+       class="{{ 'on' if active_day == (t.date or 'tutti') }}">{{ t.label }}</a>
+  {% endfor %}
 </div>
 
-{% if rows %}
-<div class="scroll-x">
-<table class="matches">
-  <thead>
-    <tr>
-      <th>Ora</th><th>Competizione</th>
-      <th class="team">Casa</th><th class="team">Ospite</th>
-      <th>1</th><th>X</th><th>2</th>
-      <th>O 2.5</th><th>U 2.5</th>
-      <th>Goal</th><th>NoGoal</th>
-      <th>Risultato</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in rows %}
-    <tr>
-      <td>{{ r.time or '--:--' }}</td>
-      <td class="comp">{{ r.comp }}</td>
-      <td class="team"><a href="{{ url_for('partita', match_id=r.id) }}">{{ r.home }}</a></td>
-      <td class="team">{{ r.away }}</td>
-      <td class="odd">{{ r.q1|fmt_odds }}</td>
-      <td class="odd">{{ r.qx|fmt_odds }}</td>
-      <td class="odd">{{ r.q2|fmt_odds }}</td>
-      <td class="odd">{{ r.qo|fmt_odds }}</td>
-      <td class="odd">{{ r.qu|fmt_odds }}</td>
-      <td class="odd">{{ r.qby|fmt_odds }}</td>
-      <td class="odd">{{ r.qbn|fmt_odds }}</td>
-      <td class="score">
-        {% if r.hg is not none %}{{ r.hg }} - {{ r.ag }}{% else %}&middot;{% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="sportchips">
+  {% for s in sports %}
+    <button class="sport {{ 'on' if s.active else 'off' }}" title="{{ 'Non disponibile' if not s.active }}">
+      <span class="dot {{ s.key }}"></span> {{ s.label }}
+    </button>
+  {% endfor %}
 </div>
-<p class="muted">{{ rows|length }} partite · tap sul nome di casa per i mercati completi.</p>
-{% else %}
-<div class="empty">
-  <p>Nessuna partita in archivio per questa data.</p>
-  <p class="muted">Lancia <code>python -m betterai sync</code> per i calendari openfootball,
-    e <code>python -m betterai sisal-sync --curl curl.txt</code> per le quote reali.</p>
+
+<div class="layout">
+<section class="main">
+  {% if top %}
+  <div class="section">
+    <header class="sechead top">TOP SCOMMESSE</header>
+    {% include "_matchtable.html" with context %}
+  </div>
+  {% set hide_top = true %}
+  {% endif %}
+
+  {% for comp, rows in groups.items() %}
+    <details class="comp" open>
+      <summary>
+        {% set lbl = comp_label(comp) %}
+        <span class="cc">{{ lbl[0] }}</span>
+        <span class="cname">{{ lbl[1] }}</span>
+        <span class="count">{{ rows|length }} partite</span>
+        <span class="chev">&#x25BE;</span>
+      </summary>
+      {% with rows=rows %}{% include "_matchtable.html" %}{% endwith %}
+    </details>
+  {% endfor %}
+
+  {% if not groups %}
+  <div class="empty">
+    <p>Nessuna partita in archivio per questa data.</p>
+    <p class="muted">Carica un cURL fresco e premi <b>Aggiorna quote</b> in alto a destra,
+       oppure da terminale <code>python -m betterai sisal-sync --json sisal.json</code>.</p>
+  </div>
+  {% endif %}
+</section>
+
+<aside class="sidebar">
+  <div class="bslip">
+    <header>Schedine AI <span class="badge">{{ slips_today|length }}</span></header>
+    {% if slips_today %}
+      {% for s in slips_today %}
+      <div class="slipmini {{ s.status }}">
+        <div class="r1">
+          <span class="strat">{{ s.strategy }}</span>
+          <span class="odd">&times; {{ '%.2f'|format(s.odds) }}</span>
+        </div>
+        <div class="r2 muted">
+          puntata {{ '%.2f'|format(s.stake) }} &euro; &middot; {{ s.status }}
+        </div>
+      </div>
+      {% endfor %}
+      <a class="all" href="{{ url_for('schedine') }}">Vedi tutte &rarr;</a>
+    {% else %}
+      <p class="muted" style="padding:12px">Nessuna schedina per oggi.
+        Lancia <code>python -m betterai daily</code>.</p>
+    {% endif %}
+  </div>
+</aside>
 </div>
-{% endif %}
 {% endblock %}

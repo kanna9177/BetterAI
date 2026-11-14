@@ -33,9 +33,44 @@ def create_app(db_path=db.DEFAULT_PATH):
     app = Flask(__name__)
     app.config["DB_PATH"] = db_path
 
+    COMP_LABELS = {
+        "it.1": ("ITA", "Serie A"),
+        "en.1": ("ENG", "Premier League"),
+        "es.1": ("ESP", "La Liga"),
+        "de.1": ("GER", "Bundesliga"),
+        "fr.1": ("FRA", "Ligue 1"),
+    }
+    SPORTS = [
+        {"key": "calcio", "label": "Calcio", "active": True},
+        {"key": "tennis", "label": "Tennis", "active": False},
+        {"key": "basket", "label": "Basket", "active": False},
+        {"key": "volley", "label": "Volley", "active": False},
+        {"key": "rugby",  "label": "Rugby",  "active": False},
+    ]
+
+    def comp_label(code):
+        if not code:
+            return ("", "")
+        if code in COMP_LABELS:
+            return COMP_LABELS[code]
+        # fallback: "en.2" -> ("ENG", "Serie 2"), or just raw
+        if "." in code:
+            cc, _, num = code.partition(".")
+            return (cc.upper(), f"Lega {num}")
+        return (code.upper(), "")
+
     @app.context_processor
     def inject_nav():
-        return {"today": date.today().isoformat(), "navcls": {}}
+        today = date.today()
+        day_tabs = [
+            {"key": "tutti",  "label": "Tutti",            "date": None},
+            {"key": "oggi",   "label": "Oggi",             "date": today.isoformat()},
+            {"key": "domani", "label": "Domani",           "date": (today + timedelta(days=1)).isoformat()},
+            {"key": "d2",     "label": (today + timedelta(days=2)).strftime("%d/%m"),
+                              "date": (today + timedelta(days=2)).isoformat()},
+        ]
+        return {"today": today.isoformat(), "sports": SPORTS, "day_tabs": day_tabs,
+                "comp_label": comp_label}
 
     def con():
         return db.connect(app.config["DB_PATH"])
@@ -46,26 +81,44 @@ def create_app(db_path=db.DEFAULT_PATH):
 
     @app.route("/oggi")
     def oggi():
-        day = request.args.get("date") or date.today().isoformat()
+        day = request.args.get("date")  # None = tutti
         c = con()
+        where = "WHERE m.date = ?" if day else "WHERE m.date >= ?"
+        day_arg = day or date.today().isoformat()
         rows = c.execute(
-            """SELECT m.id, m.date, m.time, m.comp, m.hg, m.ag,
-                      h.name home, a.name away,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:1' LIMIT 1) q1,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:X' LIMIT 1) qx,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:2' LIMIT 1) q2,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='TG:O2.5' LIMIT 1) qo,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='TG:U2.5' LIMIT 1) qu,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='BTTS:Y' LIMIT 1) qby,
-                      (SELECT odds FROM odds WHERE match_id=m.id AND selection='BTTS:N' LIMIT 1) qbn
-               FROM matches m
-               JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
-               WHERE m.date = ? ORDER BY m.time, m.id""", (day,)).fetchall()
-        prev_d = (date.fromisoformat(day) - timedelta(days=1)).isoformat()
-        next_d = (date.fromisoformat(day) + timedelta(days=1)).isoformat()
+            f"""SELECT m.id, m.date, m.time, m.comp, m.hg, m.ag,
+                       h.name home, a.name away,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:1' LIMIT 1) q1,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:X' LIMIT 1) qx,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:2' LIMIT 1) q2,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:1X' LIMIT 1) qdc1,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:X2' LIMIT 1) qdc2,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='R:12' LIMIT 1) qdc3,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='TG:U2.5' LIMIT 1) qu,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='TG:O2.5' LIMIT 1) qo,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='BTTS:Y' LIMIT 1) qby,
+                       (SELECT odds FROM odds WHERE match_id=m.id AND selection='BTTS:N' LIMIT 1) qbn,
+                       (SELECT COUNT(*) FROM odds WHERE match_id=m.id) nq
+                FROM matches m
+                JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
+                {where} ORDER BY m.date, m.time, m.id""", (day_arg,)).fetchall()
+        # Raggruppa per comp
+        groups = {}
+        for r in rows:
+            cc = r["comp"] or "altro"
+            groups.setdefault(cc, []).append(r)
+        # TOP SCOMMESSE = prime 6 partite della competizione piu' popolosa, altrimenti prime 6 globali
+        top = rows[:6] if rows else []
+        # schedine AI del giorno per sidebar
+        slips_today = c.execute(
+            """SELECT * FROM slips WHERE date = ? ORDER BY id DESC LIMIT 6""",
+            (day or date.today().isoformat(),)).fetchall()
         c.close()
-        return render_template("oggi.html", day=day, rows=rows,
-                               prev_d=prev_d, next_d=next_d, active="oggi")
+        active_day = day or "tutti"
+        return render_template("oggi.html",
+                               day=day, active_day=active_day,
+                               groups=groups, top=top, slips_today=slips_today,
+                               active="oggi")
 
     @app.route("/partita/<int:match_id>")
     def partita(match_id):

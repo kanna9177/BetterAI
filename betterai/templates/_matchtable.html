@@ -1,0 +1,51 @@
+<div class="scroll-x">
+<table class="matches sisal-like">
+  <thead>
+    <tr class="mkt">
+      <th rowspan="2" class="when">Data/Ora</th>
+      <th rowspan="2" class="teams">Squadre</th>
+      <th colspan="3">Esito Finale 1X2</th>
+      <th colspan="3">Doppia Chance</th>
+      <th colspan="2">Under/Over 2.5</th>
+      <th colspan="2">Goal/NoGoal</th>
+      <th rowspan="2" class="more">+</th>
+    </tr>
+    <tr class="sub">
+      <th>1</th><th>X</th><th>2</th>
+      <th>1X</th><th>X2</th><th>12</th>
+      <th>U</th><th>O</th>
+      <th>G</th><th>NG</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td class="when">
+        <div class="date">{{ r.date[-5:] if r.date else '' }}</div>
+        <div class="time">{{ r.time or '--:--' }}</div>
+      </td>
+      <td class="teams">
+        <a href="{{ url_for('partita', match_id=r.id) }}">
+          <div class="h">{{ r.home }}</div>
+          <div class="a">{{ r.away }}</div>
+        </a>
+        {% if r.hg is not none %}<div class="score">{{ r.hg }} - {{ r.ag }}</div>{% endif %}
+      </td>
+      <td class="odd">{{ r.q1|fmt_odds }}</td>
+      <td class="odd">{{ r.qx|fmt_odds }}</td>
+      <td class="odd">{{ r.q2|fmt_odds }}</td>
+      <td class="odd dc">{{ r.qdc1|fmt_odds }}</td>
+      <td class="odd dc">{{ r.qdc2|fmt_odds }}</td>
+      <td class="odd dc">{{ r.qdc3|fmt_odds }}</td>
+      <td class="odd uo">{{ r.qu|fmt_odds }}</td>
+      <td class="odd uo">{{ r.qo|fmt_odds }}</td>
+      <td class="odd gng">{{ r.qby|fmt_odds }}</td>
+      <td class="odd gng">{{ r.qbn|fmt_odds }}</td>
+      <td class="more">
+        <a href="{{ url_for('partita', match_id=r.id) }}">+{{ r.nq }}</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
