@@ -19,7 +19,8 @@
   </thead>
   <tbody>
     {% for r in rows %}
-    <tr>
+    {% set teams_lbl = r.home ~ ' - ' ~ r.away %}
+    <tr data-mid="{{ r.id }}" data-teams="{{ teams_lbl }}">
       <td class="when">
         <div class="date">{{ r.date[-5:] if r.date else '' }}</div>
         <div class="time">{{ r.time or '--:--' }}</div>
@@ -31,16 +32,16 @@
         </a>
         {% if r.hg is not none %}<div class="score">{{ r.hg }} - {{ r.ag }}</div>{% endif %}
       </td>
-      <td class="odd">{{ r.q1|fmt_odds }}</td>
-      <td class="odd">{{ r.qx|fmt_odds }}</td>
-      <td class="odd">{{ r.q2|fmt_odds }}</td>
-      <td class="odd dc">{{ r.qdc1|fmt_odds }}</td>
-      <td class="odd dc">{{ r.qdc2|fmt_odds }}</td>
-      <td class="odd dc">{{ r.qdc3|fmt_odds }}</td>
-      <td class="odd uo">{{ r.qu|fmt_odds }}</td>
-      <td class="odd uo">{{ r.qo|fmt_odds }}</td>
-      <td class="odd gng">{{ r.qby|fmt_odds }}</td>
-      <td class="odd gng">{{ r.qbn|fmt_odds }}</td>
+      <td class="odd pickable" data-sel="R:1"     data-odds="{{ r.q1 }}">{{ r.q1|fmt_odds }}</td>
+      <td class="odd pickable" data-sel="R:X"     data-odds="{{ r.qx }}">{{ r.qx|fmt_odds }}</td>
+      <td class="odd pickable" data-sel="R:2"     data-odds="{{ r.q2 }}">{{ r.q2|fmt_odds }}</td>
+      <td class="odd dc pickable" data-sel="R:1X" data-odds="{{ r.qdc1 }}">{{ r.qdc1|fmt_odds }}</td>
+      <td class="odd dc pickable" data-sel="R:X2" data-odds="{{ r.qdc2 }}">{{ r.qdc2|fmt_odds }}</td>
+      <td class="odd dc pickable" data-sel="R:12" data-odds="{{ r.qdc3 }}">{{ r.qdc3|fmt_odds }}</td>
+      <td class="odd uo pickable" data-sel="TG:U2.5" data-odds="{{ r.qu }}">{{ r.qu|fmt_odds }}</td>
+      <td class="odd uo pickable" data-sel="TG:O2.5" data-odds="{{ r.qo }}">{{ r.qo|fmt_odds }}</td>
+      <td class="odd gng pickable" data-sel="BTTS:Y" data-odds="{{ r.qby }}">{{ r.qby|fmt_odds }}</td>
+      <td class="odd gng pickable" data-sel="BTTS:N" data-odds="{{ r.qbn }}">{{ r.qbn|fmt_odds }}</td>
       <td class="more">
         <a href="{{ url_for('partita', match_id=r.id) }}">+{{ r.nq }}</a>
       </td>

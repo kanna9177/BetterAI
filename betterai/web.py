@@ -11,6 +11,9 @@ from datetime import date, datetime, timedelta
 
 from flask import Flask, redirect, render_template, request, url_for
 
+from functools import reduce
+from operator import mul
+
 from . import db, markets, sisal, slips
 
 
@@ -413,6 +416,167 @@ def create_app(db_path=db.DEFAULT_PATH):
                                comp_mu=comp_mu, matches_today=matches_today,
                                lessons=lessons, calib_dev=calib_dev,
                                mu_all=model.mu_all, active="algoritmo")
+
+    def _real_odds_for(c, match_id, selection):
+        r = c.execute(
+            """SELECT odds, source_id FROM odds
+               WHERE match_id = ? AND selection = ? AND source = 'sisal'""",
+            (match_id, selection)).fetchone()
+        return (r["odds"], r["source_id"]) if r else (None, None)
+
+    def _match_label(c, match_id):
+        r = c.execute(
+            """SELECT h.name home, a.name away, m.date, m.time FROM matches m
+               JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
+               WHERE m.id = ?""", (match_id,)).fetchone()
+        return (f"{r['home']} - {r['away']}" if r else f"match {match_id}",
+                r["date"] if r else None)
+
+    @app.route("/ai-improve", methods=["POST"])
+    def ai_improve():
+        """Dato il biglietto dell'utente, ritorna una proposta "piu' sicura" dell'AI
+        che resta attorno alla stessa quota totale. Per ogni leg prova a sostituire
+        con l'esito di probabilita' piu' alta sullo stesso match che resti vicino
+        alla quota (max 20% piu' bassa)."""
+        data = request.get_json(silent=True) or {}
+        user_legs = data.get("legs") or []
+        if not user_legs:
+            return {"error": "biglietto vuoto"}, 400
+        c = con()
+        from .model import fit_from_db, score_matrix
+        from . import markets as mkts
+        # Determina giorno di riferimento (max fra date dei match)
+        mids = [int(l.get("match_id", 0)) for l in user_legs]
+        day_row = c.execute(
+            f"SELECT MAX(date) FROM matches WHERE id IN ({','.join('?'*len(mids))})",
+            mids).fetchone()
+        day = (day_row and day_row[0]) or date.today().isoformat()
+        model = fit_from_db(c, day)
+
+        def pred_for(match_id):
+            m = c.execute(
+                "SELECT comp, home_id, away_id FROM matches WHERE id = ?",
+                (match_id,)).fetchone()
+            if not m:
+                return {}
+            lam, nu = model.xg(m["comp"], m["home_id"], m["away_id"])
+            return mkts.probabilities(score_matrix(lam, nu))
+
+        ai_legs = []
+        notes = []
+        prob_cache = {}
+        for leg in user_legs:
+            mid = int(leg["match_id"])
+            user_sel = leg["selection"]
+            user_odds = float(leg["odds"])
+            probs = prob_cache.setdefault(mid, pred_for(mid))
+            user_prob = probs.get(user_sel)
+            match_name, _ = _match_label(c, mid)
+            # Candidati sullo stesso match: esiti con prob >= user_prob + 8pt
+            # e quota reale disponibile, non al di sotto del 65% della quota utente
+            # (evitiamo di stravolgere il peso del match).
+            min_floor = max(user_odds * 0.65, 1.05)
+            cand = []
+            for sel, p in probs.items():
+                if sel == user_sel:
+                    continue
+                if p is None or p <= (user_prob or 0.5) + 0.08:
+                    continue
+                o, sid = _real_odds_for(c, mid, sel)
+                if o is None or o < min_floor:
+                    continue
+                cand.append((sel, p, o, sid))
+            if cand:
+                # best = highest probability (safer)
+                cand.sort(key=lambda t: -t[1])
+                alt_sel, alt_p, alt_o, alt_sid = cand[0]
+                ai_legs.append({
+                    "match_id": mid, "selection": alt_sel,
+                    "label": mkts.label(alt_sel),
+                    "odds": alt_o, "prob": alt_p, "source_id": alt_sid,
+                    "match": match_name, "changed": True,
+                })
+                notes.append(
+                    f"{match_name}: {mkts.label(user_sel)} "
+                    f"({(user_prob or 0)*100:.0f}% @ {user_odds:.2f}) → "
+                    f"{mkts.label(alt_sel)} ({alt_p*100:.0f}% @ {alt_o:.2f})")
+            else:
+                user_sid = _real_odds_for(c, mid, user_sel)[1]
+                ai_legs.append({
+                    "match_id": mid, "selection": user_sel,
+                    "label": mkts.label(user_sel),
+                    "odds": user_odds, "prob": user_prob,
+                    "source_id": user_sid, "match": match_name, "changed": False,
+                })
+        user_total = reduce(mul, (float(l["odds"]) for l in user_legs), 1.0)
+        ai_total = reduce(mul, (l["odds"] for l in ai_legs), 1.0)
+        # Arricchisci le user legs con label + match
+        user_out = []
+        for leg in user_legs:
+            mid = int(leg["match_id"])
+            sel = leg["selection"]
+            name, _ = _match_label(c, mid)
+            user_out.append({
+                "match_id": mid, "selection": sel,
+                "label": mkts.label(sel),
+                "odds": float(leg["odds"]),
+                "prob": prob_cache.get(mid, {}).get(sel),
+                "match": name,
+            })
+        c.close()
+        return {
+            "user": {"legs": user_out, "total": round(user_total, 2)},
+            "ai":   {"legs": ai_legs, "total": round(ai_total, 2),
+                     "changed": sum(1 for l in ai_legs if l["changed"])},
+            "notes": notes,
+        }
+
+    @app.route("/salva-biglietto", methods=["POST"])
+    def salva_biglietto():
+        """Salva un biglietto costruito a mano o accettato dall'AI come schedina
+        nel db (strategy='manuale' o 'manuale+ai'), cosi' entra nel ciclo
+        normale di verifica/learn."""
+        data = request.get_json(silent=True) or {}
+        legs_in = data.get("legs") or []
+        strategy = data.get("strategy") or "manuale"
+        stake = float(data.get("stake") or slips.STAKE)
+        if not legs_in:
+            return {"error": "biglietto vuoto"}, 400
+        c = con()
+        from .model import fit_from_db, score_matrix
+        from . import markets as mkts
+        mids = [int(l["match_id"]) for l in legs_in]
+        day_row = c.execute(
+            f"SELECT MAX(date) FROM matches WHERE id IN ({','.join('?'*len(mids))})",
+            mids).fetchone()
+        day = (day_row and day_row[0]) or date.today().isoformat()
+        model = fit_from_db(c, day)
+        total = 1.0
+        enriched = []
+        for leg in legs_in:
+            mid = int(leg["match_id"])
+            sel = leg["selection"]
+            odds = float(leg["odds"])
+            src = (leg.get("source_id") and "sisal") or "stimato"
+            m = c.execute(
+                "SELECT comp, home_id, away_id FROM matches WHERE id = ?",
+                (mid,)).fetchone()
+            lam, nu = model.xg(m["comp"], m["home_id"], m["away_id"]) if m else (1.5, 1.2)
+            probs = mkts.probabilities(score_matrix(lam, nu))
+            prob = probs.get(sel, 0.5)
+            total *= odds
+            enriched.append((mid, sel, prob, odds, lam, nu, src))
+        slip_id = c.execute(
+            "INSERT INTO slips(date, strategy, odds, stake) VALUES (?,?,?,?)",
+            (day, strategy, round(total, 2), stake)).lastrowid
+        c.executemany(
+            """INSERT INTO legs(slip_id, match_id, selection, prob, odds,
+                                xg_home, xg_away, odds_source)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            [(slip_id, mid, sel, prob, odds, lam, nu, src)
+             for (mid, sel, prob, odds, lam, nu, src) in enriched])
+        c.commit(); c.close()
+        return {"ok": True, "slip_id": slip_id, "total": round(total, 2)}
 
     @app.route("/aggiorna-risultati", methods=["POST"])
     def aggiorna_risultati():

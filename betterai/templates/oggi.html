@@ -50,8 +50,34 @@
 </section>
 
 <aside class="sidebar">
-  <div class="bslip">
-    <header>Schedine AI <span class="badge">{{ slips_today|length }}</span></header>
+  <div class="bslip userbslip" id="userbslip">
+    <header>
+      Il tuo biglietto <span class="badge" id="ubs-count">0</span>
+      <button class="ghost" id="ubs-clear" type="button" title="Svuota">&times;</button>
+    </header>
+    <ul class="ubs-legs" id="ubs-legs">
+      <li class="ubs-empty">Clicca una quota qualsiasi per iniziare.</li>
+    </ul>
+    <div class="ubs-total">
+      <span>Quota totale</span>
+      <b id="ubs-total">&times; 1.00</b>
+    </div>
+    <div class="ubs-stake">
+      <label>Puntata &euro;
+        <input type="number" id="ubs-stake" min="0.5" step="0.5" value="2.00">
+      </label>
+      <span class="muted">Potenziale: <b id="ubs-potential">0.00 &euro;</b></span>
+    </div>
+    <div class="ubs-actions">
+      <button class="primary" id="ubs-ai" type="button">Suggerisci AI &rarr;</button>
+      <button id="ubs-save" type="button" title="Salva nel db e verifica a risultato">Salva</button>
+    </div>
+  </div>
+
+  <div id="ai-compare" class="ai-compare" style="display:none"></div>
+
+  <div class="bslip" style="margin-top:12px">
+    <header>Schedine AI del giorno <span class="badge">{{ slips_today|length }}</span></header>
     {% if slips_today %}
       {% for s in slips_today %}
       <div class="slipmini {{ 'won' if s.status == 'won' else 'lost' if s.status == 'lost' else 'open' }}">
