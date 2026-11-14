@@ -21,8 +21,8 @@
 <section class="main">
   {% if top %}
   <div class="section">
-    <header class="sechead top">TOP SCOMMESSE</header>
-    {% include "_matchtable.html" with context %}
+    <header class="sechead top">Top scommesse</header>
+    {% with rows=top %}{% include "_matchtable.html" %}{% endwith %}
   </div>
   {% set hide_top = true %}
   {% endif %}
@@ -42,8 +42,8 @@
 
   {% if not groups %}
   <div class="empty">
-    <p>Nessuna partita in archivio per questa data.</p>
-    <p class="muted">Carica un cURL fresco e premi <b>Aggiorna quote</b> in alto a destra,
+    <p><b>Nessuna partita in archivio per questa data.</b></p>
+    <p class="muted">Salva un cURL fresco in <code>curl.txt</code> e premi <b>Aggiorna quote</b> in alto a destra,
        oppure da terminale <code>python -m betterai sisal-sync --json sisal.json</code>.</p>
   </div>
   {% endif %}
@@ -54,20 +54,21 @@
     <header>Schedine AI <span class="badge">{{ slips_today|length }}</span></header>
     {% if slips_today %}
       {% for s in slips_today %}
-      <div class="slipmini {{ s.status }}">
+      <div class="slipmini {{ 'won' if s.status == 'won' else 'lost' if s.status == 'lost' else 'open' }}">
         <div class="r1">
           <span class="strat">{{ s.strategy }}</span>
           <span class="odd">&times; {{ '%.2f'|format(s.odds) }}</span>
         </div>
         <div class="r2 muted">
-          puntata {{ '%.2f'|format(s.stake) }} &euro; &middot; {{ s.status }}
+          puntata {{ '%.2f'|format(s.stake) }} &euro; &middot;
+          <span class="st">{{ {'won': 'vinta', 'lost': 'persa'}.get(s.status, 'aperta') }}</span>
         </div>
       </div>
       {% endfor %}
       <a class="all" href="{{ url_for('schedine') }}">Vedi tutte &rarr;</a>
     {% else %}
-      <p class="muted" style="padding:12px">Nessuna schedina per oggi.
-        Lancia <code>python -m betterai daily</code>.</p>
+      <p class="muted pad">Ancora nessuna schedina per questo giorno.</p>
+      <a class="all" href="{{ url_for('biglietto_ai') }}">Crea un biglietto AI &rarr;</a>
     {% endif %}
   </div>
 </aside>

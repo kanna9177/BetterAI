@@ -2,48 +2,37 @@
 {% block title %}schedine AI {{ day }}{% endblock %}
 {% block main %}
 <div class="daybar">
-  <h1>Schedine AI · {{ day }}</h1>
+  <h1>Schedine <span class="sep">·</span> <span class="daylabel">{{ day[8:10] }}/{{ day[5:7] }}/{{ day[:4] }}</span></h1>
+  <a class="btn primary" href="{{ url_for('biglietto_ai', day=day) }}">Nuovo biglietto AI</a>
+</div>
+
+{% if slips %}
+{% set n_won = slips|selectattr('status', 'equalto', 'won')|list|length %}
+{% set n_lost = slips|selectattr('status', 'equalto', 'lost')|list|length %}
+<div class="stats">
+  <div class="stat"><b>{{ slips|length }}</b><span>schedine</span></div>
+  <div class="stat won"><b>{{ n_won }}</b><span>vinte</span></div>
+  <div class="stat lost"><b>{{ n_lost }}</b><span>perse</span></div>
+  <div class="stat open"><b>{{ slips|length - n_won - n_lost }}</b><span>aperte</span></div>
   {% if src_mix %}
-  <p class="muted">Quote per leg:
-    {% for s in src_mix %}<span class="pill {{ 'real' if s.src != 'stimato' else '' }}">{{ s.src }} {{ s.n }}</span>{% endfor %}
-  </p>
+  <div class="stat wide"><span>Quote delle partite</span>
+    <div>{% for x in src_mix %}<span class="pill {{ 'real' if x.src != 'stimato' else '' }}">{{ 'stimate' if x.src == 'stimato' else x.src }} {{ x.n }}</span>{% endfor %}</div>
+  </div>
   {% endif %}
 </div>
+{% endif %}
 
 {% if slips %}
 <div class="slips">
   {% for s in slips %}
-  <article class="slip {{ 'won' if s.status == 'won' else 'lost' if s.status == 'lost' else 'open' }}">
-    <header>
-      <span class="strat">{{ s.strategy }}</span>
-      <span class="odds">quota &times; {{ '%.2f'|format(s.odds) }}</span>
-      <span class="stake">puntata {{ '%.2f'|format(s.stake) }} &euro;</span>
-      <span class="status">{{ s.status }}</span>
-      {% if share_urls.get(s.id) %}
-        <a class="play-sisal" href="{{ share_urls[s.id] }}" target="_blank"
-           rel="noopener noreferrer">Giocala su Sisal &rarr;</a>
-      {% endif %}
-    </header>
-    <ul class="legs">
-      {% for l in legs_by_slip[s.id] %}
-      <li class="{{ 'ok' if l.result == 1 else 'ko' if l.result == 0 else 'void' if l.result == -1 else '' }}">
-        <span class="when">{{ l.time or '--:--' }}</span>
-        <a href="{{ url_for('partita', match_id=l.match_id) }}">{{ l.home }} - {{ l.away }}</a>
-        <span class="sel">{{ label(l.selection) }}</span>
-        <span class="odd">&times; {{ '%.2f'|format(l.odds) }}</span>
-        <span class="muted">p {{ (l.prob * 100)|round|int }}%</span>
-        <span class="src">{{ l.odds_source or 'stimato' }}</span>
-        {% if l.reason %}<div class="reason">{{ l.reason }}</div>{% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-  </article>
+    {% include "_slip.html" %}
   {% endfor %}
 </div>
 {% else %}
 <div class="empty">
-  <p>Nessuna schedina per {{ day }}.</p>
-  <p class="muted">Genera con <code>python -m betterai daily</code>.</p>
+  <p><b>Nessuna schedina per il {{ day[8:10] }}/{{ day[5:7] }}/{{ day[:4] }}.</b></p>
+  <p class="muted">Creane una con il <a href="{{ url_for('biglietto_ai', day=day) }}">Biglietto AI</a>
+    oppure lancia <code>python -m betterai daily</code>.</p>
 </div>
 {% endif %}
 {% endblock %}

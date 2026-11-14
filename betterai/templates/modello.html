@@ -7,7 +7,7 @@
   <h2>Fonti quote</h2>
   {% if odds_stats %}
   <table class="small">
-    <thead><tr><th>Fonte</th><th>Quote</th><th>Prima fetch</th><th>Ultima fetch</th></tr></thead>
+    <thead><tr><th>Fonte</th><th>Quote</th><th>Primo scarico</th><th>Ultimo scarico</th></tr></thead>
     <tbody>
       {% for r in odds_stats %}
       <tr>
@@ -42,10 +42,10 @@
 </section>
 
 <section>
-  <h2>Correzioni imparate (esiti con n &gt;= 50)</h2>
+  <h2>Correzioni imparate (esiti con almeno 50 casi)</h2>
   {% if calib %}
   <table class="small">
-    <thead><tr><th>Esito</th><th>Previsto</th><th>Reale</th><th>n</th><th>fattore</th></tr></thead>
+    <thead><tr><th>Esito</th><th>Previsto</th><th>Reale</th><th>Campione</th><th>Fattore</th></tr></thead>
     <tbody>
       {% for r in calib %}
       <tr>
@@ -67,7 +67,7 @@
   <h2>Andamento giornate</h2>
   {% if log %}
   <table class="small">
-    <thead><tr><th>Data</th><th>Schedine</th><th>Vinte</th><th>Staked</th><th>Rendimento</th><th>Log-loss</th></tr></thead>
+    <thead><tr><th>Data</th><th>Schedine</th><th>Vinte</th><th>Puntato</th><th>Rendimento</th><th>Log-loss</th></tr></thead>
     <tbody>
       {% for r in log %}
       <tr>

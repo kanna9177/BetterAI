@@ -1,153 +1,263 @@
 {% extends "base.html" %}
 {% block title %}Biglietto AI{% endblock %}
 {% block main %}
-<h1>Biglietto AI</h1>
-<p class="muted">Genera schedine su misura usando le quote reali di Sisal (quando ci sono)
-  e la stima del modello come fallback. Le schedine vengono salvate nel db e
-  verificate automaticamente a risultato.</p>
+{# 'form' manca sul ramo d'errore del backend e su GET e' vuoto: in entrambi i casi valgono i default. #}
+{% set f = form if (form is defined and form) else none %}
+{% set sel_fam = f.getlist('family') if f else [] %}
+{% set sel_comp = f.getlist('comp') if f else [] %}
+{% set v_n = (f.get('n_slips') if f) or 10 %}
+{% set v_minl = (f.get('min_legs') if f) or 3 %}
+{% set v_maxl = (f.get('max_legs') if f) or 5 %}
+{% set v_mino = (f.get('min_odds') if f) or '1.8' %}
+{% set v_maxo = (f.get('max_odds') if f) or '3.5' %}
+{% set v_maxleg = (f.get('max_per_leg') if f) or '' %}
+{% set v_seed = (f.get('seed') if f) or 'mario' %}
+{% set on_random = (not f) or f.get('randomize') == 'on' %}
+{% set on_real = (not f) or f.get('only_real') == 'on' %}
 
-<form class="aiform" method="post">
-  <input type="hidden" name="day" value="{{ day }}">
+<div class="narrow">
+<div class="pagehead">
+  <h1>Biglietto AI</h1>
+  <p class="lead">Scegli quante schedine vuoi, quanto lunghe e con che quota: alle partite ci pensa il modello.</p>
+</div>
 
-  <section>
-    <label>Giorno</label>
-    <input type="date" name="day" value="{{ day }}">
-    <label class="toggle" style="margin-top:10px">
-      <input type="checkbox" id="randomize" name="randomize" value="on"
-        {% if not form or form.get('randomize') == 'on' %}checked{% endif %}>
-      <span>Randomize</span>
-      <small>(ogni click = schedine diverse)</small>
-    </label>
-    <div id="seedbox" style="display:none; margin-top:8px">
-      <small class="muted">Seme fisso (rigenera le stesse):</small>
-      <input type="text" name="seed" value="{{ form.seed or 'mario' }}" style="width:140px">
+{% if error %}<p class="err">Controlla i valori inseriti e riprova. <span class="muted">({{ error }})</span></p>{% endif %}
+
+<form class="aiform" method="post" id="aiform">
+
+  <div class="fgrid">
+    <div class="field">
+      <label for="f-day">Giorno</label>
+      <input type="date" id="f-day" name="day" value="{{ day }}">
     </div>
-    <script>
-      (function(){
-        const r = document.getElementById('randomize');
-        const box = document.getElementById('seedbox');
-        const sync = () => { box.style.display = r.checked ? 'none' : 'block'; };
-        r.addEventListener('change', sync); sync();
-      })();
-    </script>
-  </section>
 
-  <section>
-    <label>Numero di schedine</label>
-    <input type="number" name="n_slips" min="1" max="200" value="{{ form.n_slips or 10 }}">
-  </section>
-
-  <section>
-    <label>Lunghezza schedina (n. partite)</label>
-    <div class="row">
-      min <input type="number" name="min_legs" min="2" max="12"
-                 value="{{ form.min_legs or 3 }}">
-      max <input type="number" name="max_legs" min="2" max="15"
-                 value="{{ form.max_legs or 5 }}">
+    <div class="field">
+      <label for="f-n">Schedine</label>
+      <input type="number" id="f-n" name="n_slips" min="1" max="200" inputmode="numeric" value="{{ v_n }}">
     </div>
-  </section>
 
-  <section>
-    <label>Range quota totale</label>
-    <div class="row">
-      min <input type="number" name="min_odds" step="0.1" min="1.1" max="500"
-                 value="{{ form.min_odds or '1.8' }}">
-      max <input type="number" name="max_odds" step="0.1" min="1.1" max="1000"
-                 value="{{ form.max_odds or '3.5' }}">
+    <div class="field">
+      <label for="f-minl">Partite per schedina</label>
+      <div class="range">
+        <input type="number" id="f-minl" name="min_legs" min="2" max="12" inputmode="numeric"
+               aria-label="Partite minime" value="{{ v_minl }}">
+        <span aria-hidden="true">&ndash;</span>
+        <input type="number" id="f-maxl" name="max_legs" min="2" max="15" inputmode="numeric"
+               aria-label="Partite massime" value="{{ v_maxl }}">
+      </div>
     </div>
-    <p class="muted">Solo combinazioni la cui quota totale cade in questo intervallo
-      vengono accettate.</p>
 
-    <label style="margin-top:12px">Quota max per singola partita (opzionale)</label>
-    <div class="row">
-      <input type="number" name="max_per_leg" step="0.01" min="1.01" max="100"
-             placeholder="es. 1.20"
-             value="{{ form.max_per_leg or '' }}">
+    <div class="field">
+      <label for="f-mino">Quota totale</label>
+      <div class="range">
+        <input type="number" id="f-mino" name="min_odds" step="0.1" min="1.1" max="500" inputmode="decimal"
+               aria-label="Quota totale minima" value="{{ v_mino }}">
+        <span aria-hidden="true">&ndash;</span>
+        <input type="number" id="f-maxo" name="max_odds" step="0.1" min="1.1" max="1000" inputmode="decimal"
+               aria-label="Quota totale massima" value="{{ v_maxo }}">
+      </div>
     </div>
-    <p class="muted">Se compilato, nessuna leg puo' superare questa quota
-      (per schedine conservative). Lascia vuoto per disattivare.</p>
+  </div>
 
-    <label class="toggle" style="margin-top:12px">
-      <input type="checkbox" name="only_real" value="on"
-             {% if not form or form.get('only_real') == 'on' %}checked{% endif %}>
-      <span>Solo quote Sisal</span>
-      <small>(garantisce bottone "Giocala su Sisal" su ogni schedina)</small>
-    </label>
-  </section>
+  <div class="presets" role="group" aria-label="Quote rapide">
+    <span class="muted">Quota rapida</span>
+    <button type="button" class="preset" data-min="1.8" data-max="3.5">Prudente <small>1.8&ndash;3.5</small></button>
+    <button type="button" class="preset" data-min="3.5" data-max="8">Equilibrata <small>3.5&ndash;8</small></button>
+    <button type="button" class="preset" data-min="8" data-max="25">Ambiziosa <small>8&ndash;25</small></button>
+  </div>
 
-  <section>
-    <label>Famiglie di esiti</label>
-    <div class="checks">
+  <div class="fblock">
+    <div class="flabel">Tipi di esito <span class="hint">nessuno selezionato = tutti</span></div>
+    <div class="chips">
       {% for key, lbl in families %}
-      <label class="chk">
+      <label class="chip">
         <input type="checkbox" name="family" value="{{ key }}"
-               {% if not form or key in form.getlist('family') or (form.getlist('family')|length == 0) %}checked{% endif %}>
-        {{ lbl }} <code>{{ key }}</code>
+               {% if not f or key in sel_fam or (sel_fam|length == 0) %}checked{% endif %}>
+        <span>{{ lbl }}</span>
       </label>
       {% endfor %}
     </div>
-    <p class="muted">Nessuna spuntata = tutte quelle del catalogo.</p>
-  </section>
+  </div>
 
-  <section>
-    <label>Competizioni ({{ comps|length }} disponibili per {{ day }})</label>
-    {% if comps %}
-    <div class="checks compcols">
-      {% for c in comps %}
-        {% set lbl = comp_label(c) %}
-        <label class="chk">
-          <input type="checkbox" name="comp" value="{{ c }}"
-                 {% if form.getlist('comp') and c in form.getlist('comp') %}checked{% endif %}>
-          <span class="cc">{{ lbl[0] }}</span> {{ lbl[1] or c }}
-        </label>
-      {% endfor %}
+  <div class="fblock">
+    <label class="switch">
+      <input type="checkbox" name="only_real" value="on" {% if on_real %}checked{% endif %}>
+      <i aria-hidden="true"></i>
+      <span><b>Solo quote Sisal</b>
+        <small>Ogni schedina avrà il tasto &ldquo;Giocala su Sisal&rdquo;. Se lo spegni, dove manca la quota vera uso la stima del modello.</small></span>
+    </label>
+  </div>
+
+  <details class="fmore" {% if sel_comp %}open{% endif %}>
+    <summary>
+      <span class="ttl">Competizioni</span>
+      <span class="val" id="comp-count" data-total="{{ comps|length }}">
+        {% if sel_comp %}{{ sel_comp|length }} su {{ comps|length }}{% else %}Tutte ({{ comps|length }}){% endif %}
+      </span>
+    </summary>
+    <div class="fmore-body">
+      {% if comps %}
+      <div class="comptools">
+        <input type="search" id="comp-q" placeholder="Cerca competizione…" aria-label="Cerca competizione" autocomplete="off">
+        <button type="button" class="linkbtn" id="comp-clear">Azzera selezione</button>
+      </div>
+      <div class="chips compchips" id="comp-list">
+        {% for c in comps %}
+          {% set lbl = comp_label(c) %}
+          <label class="chip">
+            <input type="checkbox" name="comp" value="{{ c }}" {% if c in sel_comp %}checked{% endif %}>
+            <span>{% if lbl[0] %}<em>{{ lbl[0] }}</em>{% endif %}{{ lbl[1] or c }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <p class="hint" id="comp-none" hidden>Nessuna competizione trovata.</p>
+      <p class="hint">Nessuna selezionata = tutte quelle del giorno.</p>
+      {% else %}
+      <p class="hint">Nessuna partita in archivio per il {{ day }}. Premi <b>Aggiorna quote</b> in alto
+        oppure lancia <code>sync</code> e <code>sisal-sync</code> da terminale.</p>
+      {% endif %}
     </div>
-    <p class="muted">Nessuna spuntata = tutte.</p>
-    {% else %}
-    <p class="muted">Nessuna partita in archivio per questo giorno. Prima
-      <code>sync</code> + <code>sisal-sync</code>.</p>
-    {% endif %}
-  </section>
+  </details>
 
-  <button type="submit" class="go">Genera schedine</button>
+  <details class="fmore" {% if v_maxleg or not on_random %}open{% endif %}>
+    <summary>
+      <span class="ttl">Opzioni avanzate</span>
+      <span class="val">quota max per partita, schedine ripetibili</span>
+    </summary>
+    <div class="fmore-body advgrid">
+      <div class="field">
+        <label for="f-maxleg">Quota max per singola partita</label>
+        <input type="number" id="f-maxleg" name="max_per_leg" step="0.01" min="1.01" max="100" inputmode="decimal"
+               placeholder="es. 1.20" value="{{ v_maxleg }}">
+        <p class="hint">Per schedine più prudenti: nessuna partita supera questa quota. Vuoto = nessun limite.</p>
+      </div>
+      <div class="field">
+        <label class="switch">
+          <input type="checkbox" id="randomize" name="randomize" value="on" {% if on_random %}checked{% endif %}>
+          <i aria-hidden="true"></i>
+          <span><b>Schedine sempre diverse</b>
+            <small>Ogni volta che generi ottieni combinazioni nuove.</small></span>
+        </label>
+        <div id="seedbox" class="seedbox" hidden>
+          <label for="f-seed">Parola chiave</label>
+          <input type="text" id="f-seed" name="seed" value="{{ v_seed }}" autocomplete="off">
+          <p class="hint">Con la stessa parola rigeneri esattamente le stesse schedine.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="factions">
+    <p class="recap" id="recap" aria-live="polite"></p>
+    <button type="submit" class="go" id="go">Genera schedine</button>
+  </div>
 </form>
 
-{% if error %}<p class="err">{{ error }}</p>{% endif %}
-
-{% if made is defined and request.method == 'POST' %}
+{% if made is defined and request.method == 'POST' and not error %}
+  <section id="risultati">
   {% if made %}
-    <h2>Generate {{ made|length }} schedine</h2>
+    <div class="reshead">
+      <h2>{{ made|length }} {{ 'schedina generata' if made|length == 1 else 'schedine generate' }}</h2>
+      <a class="btn" href="{{ url_for('schedine', date=day) }}">Vedi tutte le schedine del giorno</a>
+    </div>
+    {% if made|length < (v_n|int) %}
+    <p class="note">Ne avevi chieste {{ v_n }}: con questi filtri non ci sono altre combinazioni.
+      Per averne di più allarga la quota totale o aggiungi esiti e competizioni.</p>
+    {% endif %}
     <div class="slips">
       {% for s in made %}
-      <article class="slip open">
-        <header>
-          <span class="strat">{{ s.strategy }}</span>
-          <span class="odds">quota &times; {{ '%.2f'|format(s.odds) }}</span>
-          <span class="stake">puntata {{ '%.2f'|format(s.stake) }} &euro;</span>
-          <span class="status">{{ s.status }}</span>
-          {% if share_urls.get(s.id) %}
-            <a class="play-sisal" href="{{ share_urls[s.id] }}" target="_blank"
-               rel="noopener noreferrer">Giocala su Sisal &rarr;</a>
-          {% endif %}
-        </header>
-        <ul class="legs">
-          {% for l in legs_by_slip[s.id] %}
-          <li>
-            <span class="when">{{ l.time or '--:--' }}</span>
-            <a href="{{ url_for('partita', match_id=l.match_id) }}">{{ l.home }} - {{ l.away }}</a>
-            <span class="sel">{{ label(l.selection) }}</span>
-            <span class="odd">&times; {{ '%.2f'|format(l.odds) }}</span>
-            <span class="muted">p {{ (l.prob * 100)|round|int }}%</span>
-            <span class="src">{{ l.odds_source or 'stimato' }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      </article>
+        {% include "_slip.html" %}
       {% endfor %}
     </div>
   {% else %}
-    <p class="err">Nessuna schedina generata: prova ad allargare il range quota
-      o il numero di leg, o a includere piu' famiglie / competizioni.</p>
+    <div class="empty">
+      <p><b>Nessuna schedina con questi filtri.</b></p>
+      <p class="muted">Prova ad allargare la quota totale, cambiare il numero di partite
+        o includere più esiti e competizioni.{% if on_real %} Puoi anche spegnere &ldquo;Solo quote Sisal&rdquo;.{% endif %}</p>
+    </div>
   {% endif %}
+  </section>
 {% endif %}
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const form = $('aiform');
+  const el = { day: $('f-day'), n: $('f-n'), minl: $('f-minl'), maxl: $('f-maxl'),
+               mino: $('f-mino'), maxo: $('f-maxo') };
+
+  // Cambiando giorno ricarico la pagina: le competizioni dipendono dal giorno.
+  const day0 = el.day.value;
+  el.day.addEventListener('change', () => {
+    if (el.day.value && el.day.value !== day0) {
+      location.href = location.pathname + '?day=' + encodeURIComponent(el.day.value);
+    }
+  });
+
+  // Parola chiave visibile solo se le schedine devono essere ripetibili.
+  const rnd = $('randomize'), seedbox = $('seedbox');
+  const syncSeed = () => { seedbox.hidden = rnd.checked; };
+  rnd.addEventListener('change', syncSeed); syncSeed();
+
+  // Riepilogo, preset attivo e controllo min <= max.
+  const presets = [...document.querySelectorAll('.preset')];
+  const num = (i) => parseFloat(i.value);
+  function sync() {
+    const n = num(el.n), a = num(el.minl), b = num(el.maxl), x = num(el.mino), y = num(el.maxo);
+    el.maxl.setCustomValidity(a > b ? 'Il massimo deve essere almeno ' + a : '');
+    el.maxo.setCustomValidity(x > y ? 'La quota massima deve essere almeno ' + x : '');
+    presets.forEach(p => p.classList.toggle('on',
+      parseFloat(p.dataset.min) === x && parseFloat(p.dataset.max) === y));
+    if ([n, a, b, x, y].some(Number.isNaN)) { $('recap').textContent = ''; return; }
+    $('recap').innerHTML = '<b>' + n + '</b> ' + (n === 1 ? 'schedina' : 'schedine') +
+      ' · <b>' + (a === b ? a : a + '–' + b) + '</b> partite · quota <b>' + x + '–' + y + '</b>';
+  }
+  Object.values(el).forEach(i => i.addEventListener('input', sync));
+  presets.forEach(p => p.addEventListener('click', () => {
+    el.mino.value = p.dataset.min; el.maxo.value = p.dataset.max; sync();
+  }));
+  sync();
+
+  // Competizioni: contatore, ricerca, azzera.
+  const list = $('comp-list');
+  if (list) {
+    const count = $('comp-count'), q = $('comp-q'), none = $('comp-none');
+    const chips = [...list.querySelectorAll('.chip')];
+    const total = count.dataset.total;
+    const syncCount = () => {
+      const k = list.querySelectorAll('input:checked').length;
+      count.textContent = k ? k + ' su ' + total : 'Tutte (' + total + ')';
+      $('comp-clear').hidden = !k;
+    };
+    list.addEventListener('change', syncCount); syncCount();
+    q.addEventListener('input', () => {
+      const t = q.value.trim().toLowerCase();
+      let shown = 0;
+      chips.forEach(c => {
+        const hit = !t || c.textContent.toLowerCase().includes(t);
+        c.hidden = !hit; if (hit) shown++;
+      });
+      none.hidden = shown > 0;
+    });
+    q.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+    $('comp-clear').addEventListener('click', () => {
+      list.querySelectorAll('input:checked').forEach(i => { i.checked = false; });
+      syncCount();
+    });
+  }
+
+  // Feedback durante la generazione.
+  form.addEventListener('submit', () => {
+    const b = $('go'); b.classList.add('busy'); b.textContent = 'Sto generando…';
+    setTimeout(() => { b.disabled = true; }, 0);
+  });
+  window.addEventListener('pageshow', () => {
+    const b = $('go'); b.disabled = false; b.classList.remove('busy'); b.textContent = 'Genera schedine';
+  });
+
+  const res = $('risultati');
+  if (res) res.scrollIntoView({ block: 'start' });
+})();
+</script>
 {% endblock %}

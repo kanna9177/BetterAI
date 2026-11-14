@@ -4,8 +4,8 @@
 <h1>Aggiorna quote</h1>
 {% if error %}
 <p class="err">{{ error }}</p>
-<p class="muted">Procedura:</p>
-<ol>
+<p class="muted">Come ottenere un cURL fresco:</p>
+<ol class="steps">
   <li>apri Brave/Chrome/Edge su <code>https://www.sisal.it/scommesse-matchpoint/palinsesto/calcio?day=today</code></li>
   <li>DevTools &rarr; Network &rarr; Fetch/XHR &rarr; riordina per <b>Size</b> desc</li>
   <li>trova il "schedaDisciplina" (~15 MB) &rarr; tasto destro &rarr; Copy as cURL (bash)</li>
@@ -13,7 +13,8 @@
   <li>torna qui e ripremi "Aggiorna quote"</li>
 </ol>
 {% else %}
-<p class="ok">OK. Scaricate <b>{{ m }}</b> partite, <b>{{ q }}</b> quote aggiornate.</p>
-<p><a class="btn" href="{{ url_for('oggi') }}">Vai al palinsesto</a></p>
+<p class="ok">Fatto: <b>{{ m }}</b> partite scaricate, <b>{{ q }}</b> quote aggiornate.</p>
+<p><a class="btn primary" href="{{ url_for('oggi') }}">Vai al palinsesto</a>
+  <a class="btn" href="{{ url_for('biglietto_ai') }}">Crea un biglietto AI</a></p>
 {% endif %}
 {% endblock %}

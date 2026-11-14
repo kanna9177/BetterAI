@@ -1,0 +1,60 @@
+{# Card schedina condivisa da Biglietto AI e Schedine.
+   Si aspetta nel contesto: s (slip), legs_by_slip, share_urls, label(fn). #}
+{% set st = 'won' if s.status == 'won' else 'lost' if s.status == 'lost' else 'open' %}
+{% set st_label = {'won': 'Vinta', 'lost': 'Persa', 'open': 'Aperta'}[st] %}
+{% set legs = legs_by_slip[s.id] %}
+<article class="slip {{ st }}">
+  <header>
+    <div class="slip-meta">
+      <span class="status">{{ st_label }}</span>
+      <span class="strat">{{ s.strategy }}</span>
+      <span class="nlegs">{{ legs|length }} partite</span>
+    </div>
+    <div class="slip-odds" title="Quota totale">
+      <small>quota</small>
+      <span class="odds">{{ '%.2f'|format(s.odds) }}</span>
+    </div>
+  </header>
+
+  <ul class="legs">
+    {% for l in legs %}
+    <li class="{{ 'ok' if l.result == 1 else 'ko' if l.result == 0 else 'void' if l.result == -1 else '' }}">
+      <span class="when">{{ l.time or '--:--' }}</span>
+      <div class="match">
+        <a href="{{ url_for('partita', match_id=l.match_id) }}">{{ l.home }} &ndash; {{ l.away }}</a>
+        <div class="leg-meta">
+          <span class="prob" title="Probabilità stimata dal modello">{{ (l.prob * 100)|round|int }}%</span>
+          {% if l.odds_source and l.odds_source != 'stimato' %}
+            <span class="src real">{{ l.odds_source }}</span>
+          {% else %}
+            <span class="src" title="Quota non disponibile sulla fonte: stimata dal modello">quota stimata</span>
+          {% endif %}
+          {% if l.result == 1 %}<span class="res">presa</span>
+          {% elif l.result == 0 %}<span class="res">sbagliata</span>
+          {% elif l.result == -1 %}<span class="res">annullata</span>{% endif %}
+        </div>
+        {% if l.reason %}<div class="reason">{{ l.reason }}</div>{% endif %}
+      </div>
+      <span class="sel">{{ label(l.selection) }}</span>
+      <span class="odd">{{ '%.2f'|format(l.odds) }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <footer>
+    <div class="money">
+      <span class="stake"><small>Puntata</small>{{ '%.2f'|format(s.stake) }} &euro;</span>
+      {% if st == 'won' %}
+        <span class="win"><small>Vincita</small>{{ '%.2f'|format(s.payout or (s.odds * s.stake)) }} &euro;</span>
+      {% elif st == 'lost' %}
+        <span class="win"><small>Vincita</small>0.00 &euro;</span>
+      {% else %}
+        <span class="win"><small>Vincita potenziale</small>{{ '%.2f'|format(s.odds * s.stake) }} &euro;</span>
+      {% endif %}
+    </div>
+    {% if share_urls.get(s.id) %}
+      <a class="play-sisal" href="{{ share_urls[s.id] }}" target="_blank"
+         rel="noopener noreferrer">Giocala su Sisal <span aria-hidden="true">&rarr;</span></a>
+    {% endif %}
+  </footer>
+</article>

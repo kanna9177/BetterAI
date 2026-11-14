@@ -20,7 +20,7 @@
           <tr>
             <td>{{ it.label }}</td>
             <td class="odd">{{ it.odds|fmt_odds }}</td>
-            <td class="muted">{{ it.source }}</td>
+            <td class="muted src">{{ it.source }}</td>
             <td class="odd">{{ it.prob|fmt_prob }}</td>
           </tr>
           {% endfor %}
@@ -30,8 +30,8 @@
   {% endfor %}
 {% else %}
   <div class="empty">
-    <p>Nessuna quota per questa partita (ancora).</p>
-    <p class="muted">Fai "Aggiorna quote" in alto dopo aver copiato un cURL fresco dalle devtools.</p>
+    <p><b>Ancora nessuna quota per questa partita.</b></p>
+    <p class="muted">Copia un cURL fresco dai DevTools in <code>curl.txt</code> e premi <b>Aggiorna quote</b> in alto.</p>
   </div>
 {% endif %}
 {% endblock %}
