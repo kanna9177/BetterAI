@@ -74,6 +74,12 @@ def label(selection):
             parts.append(val)
         elif kind == "TG":
             parts.append(("OVER " if val[0] == "O" else "UNDER ") + val[1:])
+        elif kind == "HG":
+            parts.append(f"MULTIGOAL CASA {val}")
+        elif kind == "AG":
+            parts.append(f"MULTIGOAL OSPITE {val}")
+        elif kind == "MGT":
+            parts.append(f"MULTIGOAL {val}")
         else:
-            parts.append(("MULTIGOAL CASA " if kind == "HG" else "MULTIGOAL OSPITE ") + val)
+            parts.append(x)
     return " + ".join(parts)

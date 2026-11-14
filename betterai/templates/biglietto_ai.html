@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Biglietto AI{% endblock %}
+{% block main %}
+<h1>Biglietto AI</h1>
+<p class="muted">Genera schedine su misura usando le quote reali di Sisal (quando ci sono)
+  e la stima del modello come fallback. Le schedine vengono salvate nel db e
+  verificate automaticamente a risultato.</p>
+
+<form class="aiform" method="post">
+  <input type="hidden" name="day" value="{{ day }}">
+
+  <section>
+    <label>Giorno</label>
+    <input type="date" name="day" value="{{ day }}">
+    <p class="muted">Seme random per riproducibilita':
+      <input type="text" name="seed" value="{{ form.seed or 'ai' }}" style="width:120px">
+    </p>
+  </section>
+
+  <section>
+    <label>Numero di schedine</label>
+    <input type="number" name="n_slips" min="1" max="200" value="{{ form.n_slips or 10 }}">
+  </section>
+
+  <section>
+    <label>Lunghezza schedina (n. partite)</label>
+    <div class="row">
+      min <input type="number" name="min_legs" min="2" max="12"
+                 value="{{ form.min_legs or 3 }}">
+      max <input type="number" name="max_legs" min="2" max="15"
+                 value="{{ form.max_legs or 5 }}">
+    </div>
+  </section>
+
+  <section>
+    <label>Range quota totale</label>
+    <div class="row">
+      min <input type="number" name="min_odds" step="0.1" min="1.1" max="500"
+                 value="{{ form.min_odds or '1.8' }}">
+      max <input type="number" name="max_odds" step="0.1" min="1.1" max="1000"
+                 value="{{ form.max_odds or '3.5' }}">
+    </div>
+    <p class="muted">Solo combinazioni la cui quota totale cade in questo intervallo
+      vengono accettate.</p>
+  </section>
+
+  <section>
+    <label>Famiglie di esiti</label>
+    <div class="checks">
+      {% for key, lbl in families %}
+      <label class="chk">
+        <input type="checkbox" name="family" value="{{ key }}"
+               {% if not form or key in form.getlist('family') or (form.getlist('family')|length == 0) %}checked{% endif %}>
+        {{ lbl }} <code>{{ key }}</code>
+      </label>
+      {% endfor %}
+    </div>
+    <p class="muted">Nessuna spuntata = tutte quelle del catalogo.</p>
+  </section>
+
+  <section>
+    <label>Competizioni ({{ comps|length }} disponibili per {{ day }})</label>
+    {% if comps %}
+    <div class="checks compcols">
+      {% for c in comps %}
+        {% set lbl = comp_label(c) %}
+        <label class="chk">
+          <input type="checkbox" name="comp" value="{{ c }}"
+                 {% if form.getlist('comp') and c in form.getlist('comp') %}checked{% endif %}>
+          <span class="cc">{{ lbl[0] }}</span> {{ lbl[1] or c }}
+        </label>
+      {% endfor %}
+    </div>
+    <p class="muted">Nessuna spuntata = tutte.</p>
+    {% else %}
+    <p class="muted">Nessuna partita in archivio per questo giorno. Prima
+      <code>sync</code> + <code>sisal-sync</code>.</p>
+    {% endif %}
+  </section>
+
+  <button type="submit" class="go">Genera schedine</button>
+</form>
+
+{% if error %}<p class="err">{{ error }}</p>{% endif %}
+
+{% if made is defined and request.method == 'POST' %}
+  {% if made %}
+    <h2>Generate {{ made|length }} schedine</h2>
+    <div class="slips">
+      {% for s in made %}
+      <article class="slip open">
+        <header>
+          <span class="strat">{{ s.strategy }}</span>
+          <span class="odds">quota &times; {{ '%.2f'|format(s.odds) }}</span>
+          <span class="stake">puntata {{ '%.2f'|format(s.stake) }} &euro;</span>
+          <span class="status">{{ s.status }}</span>
+        </header>
+        <ul class="legs">
+          {% for l in legs_by_slip[s.id] %}
+          <li>
+            <span class="when">{{ l.time or '--:--' }}</span>
+            <a href="{{ url_for('partita', match_id=l.match_id) }}">{{ l.home }} - {{ l.away }}</a>
+            <span class="sel">{{ label(l.selection) }}</span>
+            <span class="odd">&times; {{ '%.2f'|format(l.odds) }}</span>
+            <span class="muted">p {{ (l.prob * 100)|round|int }}%</span>
+            <span class="src">{{ l.odds_source or 'stimato' }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="err">Nessuna schedina generata: prova ad allargare il range quota
+      o il numero di leg, o a includere piu' famiglie / competizioni.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

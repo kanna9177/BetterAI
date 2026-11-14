@@ -166,7 +166,7 @@ def _fake_sisal_payload():
                 {"descrizione": "UNDER", "quota": 105, "stato": 1},
             ]},
             "100-500-30562-0": {"stato": 1, "soglia": "", "esitoList": [
-                # multigoal totale, non modellato in betterai -> ignorato
+                # multigoal totale, mappato a MGT:1-3 (solo storage, non modellato)
                 {"descrizione": "1-3", "quota": 150, "stato": 1},
             ]},
             "100-501-3-0": {"stato": 1, "soglia": "", "esitoList": [
@@ -233,16 +233,17 @@ class SisalTest(unittest.TestCase):
         self.assertEqual(q["TG:O1.5"], 1.10)
         self.assertEqual(q["TG:O2.5"], 1.80)
         self.assertEqual(q["TG:U3.5"], 1.60)
-        # 3 (1X2) + 3 (DC) + 2 (BTTS) + 2*3 (U/O 1.5/2.5/3.5) = 14;
-        # multigoal totale e U/O 5.5 scartati
-        self.assertEqual(len(q), 14)
+        # 3 (1X2) + 3 (DC) + 2 (BTTS) + 2*3 (U/O 1.5/2.5/3.5) + 1 (MGT:1-3) = 15;
+        # U/O 5.5 scartato (linea fuori catalogo)
+        self.assertEqual(len(q), 15)
+        self.assertEqual(q["MGT:1-3"], 1.50)
 
         # esito sospeso (stato=0) non entra
         self.assertEqual(juve_napoli["quotes"], {"R:1": 1.70, "R:X": 3.40})
 
         m, nq = sisal.store(con, "it.1", events)
         self.assertEqual(m, 2)
-        self.assertEqual(nq, 14 + 2)
+        self.assertEqual(nq, 15 + 2)
         row = con.execute(
             """SELECT o.odds FROM odds o JOIN matches m ON m.id = o.match_id
                JOIN teams h ON h.id = m.home_id
@@ -251,7 +252,7 @@ class SisalTest(unittest.TestCase):
         # re-store aggiorna invece di duplicare
         sisal.store(con, "it.1", events)
         self.assertEqual(
-            con.execute("SELECT COUNT(*) FROM odds").fetchone()[0], 16)
+            con.execute("SELECT COUNT(*) FROM odds").fetchone()[0], 17)
 
 
 if __name__ == "__main__":

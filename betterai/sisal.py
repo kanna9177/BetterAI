@@ -101,9 +101,13 @@ MARKET_1X2 = 3
 MARKET_DC = 28319
 MARKET_UO = 7989
 MARKET_BTTS = 18
-WANTED_MARKETS = {MARKET_1X2, MARKET_DC, MARKET_UO, MARKET_BTTS}
+MARKET_MULTIGOAL = 30562  # multigoal totale (1-2, 1-3, ecc. sui gol di entrambe)
+WANTED_MARKETS = {MARKET_1X2, MARKET_DC, MARKET_UO, MARKET_BTTS, MARKET_MULTIGOAL}
 
 UO_LINES_OK = {"1.5", "2.5", "3.5"}
+# Range multigoal totale accettati (sisal ne espone fino a 5-6)
+MGT_RANGES_OK = {"1-2", "1-3", "1-4", "1-5", "2-3", "2-4", "2-5", "2-6",
+                 "3-4", "3-5", "3-6", "4-6", "5-6", "0"}
 
 _CURL_DROP_HEADERS = {"if-none-match", "if-modified-since", "content-length", "host"}
 
@@ -126,6 +130,10 @@ def translate_outcome(codice_scommessa, outcome_desc, soglia):
             return f"TG:U{soglia.strip()}"
         if o == "OVER":
             return f"TG:O{soglia.strip()}"
+    if codice_scommessa == MARKET_MULTIGOAL and o in MGT_RANGES_OK:
+        # MGT = Multigoal Totale (gol totali nel match). Non modellato da
+        # markets.py; salvato per visualizzazione nel dettaglio partita.
+        return f"MGT:{o}"
     return None
 
 

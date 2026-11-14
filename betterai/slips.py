@@ -72,6 +72,86 @@ def _leg_odds(real, match_id, selection, prob):
     return max(round(MARGIN / prob, 2), 1.01), ESTIMATED
 
 
+def generate_custom(con, model, day, *, comps=None, exclude_ids=None,
+                    families=None, min_legs=3, max_legs=5,
+                    min_total_odds=1.5, max_total_odds=10.0,
+                    n_slips=10, seed="ai", strategy_name="ai-custom"):
+    """Genera schedine su misura. Ritorna la lista di slip_id creati.
+
+    - comps: set di codici competizione (es {'it.1','en.1'}) o None per tutte.
+    - exclude_ids: set di match_id da escludere.
+    - families: set di 'famiglie' esito (es {'R','R+TG','BTTS','TG','R+BTTS','HG+AG'}),
+                None = tutte quelle del catalogo.
+    - min/max_legs: lunghezza schedina.
+    - min/max_total_odds: quota totale del multiplo accettabile.
+    - n_slips: quante generarne (rifiuta i duplicati).
+    """
+    cands = predict_matches(con, model, day)
+    if not cands:
+        con.commit()
+        return []
+    # Associa comp al match per filtrare
+    match_comp = {r["id"]: r["comp"] for r in con.execute(
+        "SELECT id, comp FROM matches WHERE date = ?", (day,))}
+    if comps:
+        cands = [c for c in cands if match_comp.get(c["id"]) in comps]
+    if exclude_ids:
+        cands = [c for c in cands if c["id"] not in exclude_ids]
+    if len(cands) < min_legs:
+        con.commit()
+        return []
+    real = real_odds_map(con)
+    rng = random.Random(f"{strategy_name}-{seed}-{day}")
+
+    # esistenti per deduplica
+    existing = set()
+    for sid, in con.execute(
+            "SELECT id FROM slips WHERE date = ? AND strategy = ?", (day, strategy_name)):
+        key = tuple(sorted(
+            (r["match_id"], r["selection"]) for r in con.execute(
+                "SELECT match_id, selection FROM legs WHERE slip_id = ?", (sid,))))
+        existing.add(key)
+
+    made = []
+    for _ in range(n_slips * 25):
+        if len(made) >= n_slips:
+            break
+        target = rng.randint(min_legs, max_legs)
+        legs = []
+        for m in rng.sample(cands, len(cands)):
+            opts = [(s, p) for s, p in m["probs"].items()
+                    if (families is None or markets.family(s) in families)
+                    and 0.20 <= p <= 0.98]
+            if opts:
+                legs.append((m, *rng.choice(opts)))
+            if len(legs) == target:
+                break
+        if len(legs) < min_legs:
+            continue
+        sig = tuple(sorted((m["id"], s) for m, s, _ in legs))
+        if sig in existing:
+            continue
+        priced = [(_leg_odds(real, m["id"], s, p), m, s, p) for m, s, p in legs]
+        total = 1.0
+        for (o, _), _, _, _ in priced:
+            total *= o
+        if not (min_total_odds <= total <= max_total_odds):
+            continue
+        existing.add(sig)
+        slip_id = con.execute(
+            "INSERT INTO slips(date, strategy, odds, stake) VALUES (?,?,?,?)",
+            (day, strategy_name, round(total, 2), STAKE)).lastrowid
+        con.executemany(
+            """INSERT INTO legs(slip_id, match_id, selection, prob, odds,
+                                xg_home, xg_away, odds_source)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            [(slip_id, m["id"], s, p, o, m["xg"][0], m["xg"][1], src)
+             for (o, src), m, s, p in priced])
+        made.append(slip_id)
+    con.commit()
+    return made
+
+
 def generate(con, model, day, n=50, seed=None):
     if con.execute("SELECT 1 FROM slips WHERE date = ? LIMIT 1", (day,)).fetchone():
         return 0

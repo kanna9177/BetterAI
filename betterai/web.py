@@ -203,6 +203,62 @@ def create_app(db_path=db.DEFAULT_PATH):
                                log=log, odds_stats=odds_stats, label=markets.label,
                                active="modello")
 
+    FAMILIES = [
+        ("R",       "1X2 / Doppia Chance"),
+        ("BTTS",    "Goal / NoGoal"),
+        ("TG",      "Under / Over"),
+        ("R+BTTS",  "Combo 1X2 + Goal/NoGoal"),
+        ("R+TG",    "Combo 1X2 + U/O"),
+        ("HG+AG",   "Multigoal casa + ospite"),
+    ]
+
+    @app.route("/biglietto-ai", methods=["GET", "POST"])
+    def biglietto_ai():
+        c = con()
+        today = date.today().isoformat()
+        day = request.form.get("day") or request.args.get("day") or today
+        # Competizioni disponibili per il giorno
+        comps = [r["comp"] for r in c.execute(
+            "SELECT DISTINCT comp FROM matches WHERE date = ? ORDER BY comp", (day,))]
+        made_slips = []
+        if request.method == "POST":
+            sel_comps = set(request.form.getlist("comp")) or None
+            sel_families = set(request.form.getlist("family")) or None
+            try:
+                opts = dict(
+                    comps=sel_comps,
+                    families=sel_families,
+                    min_legs=int(request.form.get("min_legs", 3)),
+                    max_legs=int(request.form.get("max_legs", 5)),
+                    min_total_odds=float(request.form.get("min_odds", 1.8)),
+                    max_total_odds=float(request.form.get("max_odds", 3.5)),
+                    n_slips=int(request.form.get("n_slips", 10)),
+                    seed=request.form.get("seed", "ai"),
+                )
+            except ValueError:
+                return render_template("biglietto_ai.html", day=day, comps=comps,
+                                       families=FAMILIES, made=[], error="input non valido",
+                                       active="ai"), 400
+            from .model import fit_from_db
+            model = fit_from_db(c, day)
+            ids = slips.generate_custom(c, model, day, **opts)
+            if ids:
+                q = "SELECT * FROM slips WHERE id IN ({})".format(",".join(["?"] * len(ids)))
+                made_slips = c.execute(q, ids).fetchall()
+        legs_by_slip = {}
+        for s in made_slips:
+            legs_by_slip[s["id"]] = c.execute(
+                """SELECT l.*, h.name home, a.name away, m.date, m.time FROM legs l
+                   JOIN matches m ON m.id = l.match_id
+                   JOIN teams h ON h.id = m.home_id JOIN teams a ON a.id = m.away_id
+                   WHERE l.slip_id = ? ORDER BY m.time, m.id""", (s["id"],)).fetchall()
+        c.close()
+        return render_template("biglietto_ai.html", day=day, comps=comps,
+                               comp_label=comp_label, families=FAMILIES,
+                               made=made_slips, legs_by_slip=legs_by_slip,
+                               label=markets.label, active="ai",
+                               form=request.form)
+
     @app.route("/aggiorna-quote", methods=["POST"])
     def aggiorna_quote():
         """Legge curl.txt nella cwd e ri-sincronizza le quote da Sisal."""
