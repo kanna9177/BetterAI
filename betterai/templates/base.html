@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>BetterAI — {% block title %}dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">BA</span> BetterAI</div>
+    <nav class="tabs">
+      <a href="{{ url_for('oggi') }}"      class="{{ 'on' if active=='oggi' }}">Palinsesto</a>
+      <a href="{{ url_for('schedine') }}"  class="{{ 'on' if active=='schedine' }}">Schedine AI</a>
+      <a href="{{ url_for('modello') }}"   class="{{ 'on' if active=='modello' }}">Modello</a>
+    </nav>
+    <form action="{{ url_for('aggiorna_quote') }}" method="post" class="refresh">
+      <button type="submit" title="Legge curl.txt dalla cwd e ri-sincronizza da Sisal">
+        Aggiorna quote
+      </button>
+    </form>
+  </header>
+  <main>
+    {% block main %}{% endblock %}
+  </main>
+  <footer class="foot">
+    quote reali: <b>Sisal</b> (cookies ~30-60 min) · stime: aggio 0.93/probabilita modello
+  </footer>
+</body>
+</html>

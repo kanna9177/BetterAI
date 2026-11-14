@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}modello{% endblock %}
+{% block main %}
+<h1>Modello &amp; archivi</h1>
+
+<section>
+  <h2>Fonti quote</h2>
+  {% if odds_stats %}
+  <table class="small">
+    <thead><tr><th>Fonte</th><th>Quote</th><th>Prima fetch</th><th>Ultima fetch</th></tr></thead>
+    <tbody>
+      {% for r in odds_stats %}
+      <tr>
+        <td><span class="pill real">{{ r.source }}</span></td>
+        <td>{{ r.n }}</td>
+        <td class="muted">{{ r.first }}</td>
+        <td class="muted">{{ r.last }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Nessuna quota caricata. Usa "Aggiorna quote" in alto o
+    <code>python -m betterai sisal-sync --curl curl.txt</code>.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Squadre (prime 60 per partite giocate)</h2>
+  {% if teams %}
+  <table class="small">
+    <thead><tr><th>Squadra</th><th>Giocate</th><th>Future in archivio</th></tr></thead>
+    <tbody>
+      {% for t in teams %}
+      <tr><td>{{ t.name }}</td><td>{{ t.n_gioc }}</td><td>{{ t.n_futur }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Nessuna squadra in archivio. Prima <code>python -m betterai sync</code>.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Correzioni imparate (esiti con n &gt;= 50)</h2>
+  {% if calib %}
+  <table class="small">
+    <thead><tr><th>Esito</th><th>Previsto</th><th>Reale</th><th>n</th><th>fattore</th></tr></thead>
+    <tbody>
+      {% for r in calib %}
+      <tr>
+        <td>{{ label(r.selection) }}</td>
+        <td class="odd">{{ (r.sum_p / r.n * 100)|round(1) }}%</td>
+        <td class="odd">{{ (r.hits / r.n * 100)|round(1) }}%</td>
+        <td>{{ r.n }}</td>
+        <td class="odd">{{ ((r.hits + 100) / (r.sum_p + 100))|round(2) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Modello non ancora abbastanza esperto (serve <code>backtest</code>).</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Andamento giornate</h2>
+  {% if log %}
+  <table class="small">
+    <thead><tr><th>Data</th><th>Schedine</th><th>Vinte</th><th>Staked</th><th>Rendimento</th><th>Log-loss</th></tr></thead>
+    <tbody>
+      {% for r in log %}
+      <tr>
+        <td>{{ r.date }}</td><td>{{ r.slips }}</td><td>{{ r.won }}</td>
+        <td class="odd">{{ '%.2f'|format(r.staked or 0) }}</td>
+        <td class="odd {{ 'ok' if (r.returned or 0) > (r.staked or 0) else 'ko' }}">
+          {{ '%.2f'|format(r.returned or 0) }}
+        </td>
+        <td class="odd">{{ '%.3f'|format(r.ll_model or 0) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Nessuno storico. Prima <code>python -m betterai backtest --start 2024-08-01</code>.</p>
+  {% endif %}
+</section>
+{% endblock %}

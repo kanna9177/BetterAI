@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ m.home }} - {{ m.away }}{% endblock %}
+{% block main %}
+<div class="matchhead">
+  <a class="back" href="{{ url_for('oggi', date=m.date) }}">&larr; {{ m.date }}</a>
+  <h1>{{ m.home }} <span class="sep">vs</span> {{ m.away }}</h1>
+  <p class="muted">{{ m.date }} {{ m.time or '' }} · {{ m.comp }} {{ m.season or '' }}
+    {% if m.hg is not none %} · risultato <b>{{ m.hg }} - {{ m.ag }}</b>{% endif %}
+  </p>
+</div>
+
+{% if grouped %}
+  {% for fam, items in grouped.items() %}
+    <section class="market">
+      <h2>{{ fam }}</h2>
+      <table class="odds">
+        <thead><tr><th>Esito</th><th>Quota</th><th>Fonte</th><th>Prob. modello</th></tr></thead>
+        <tbody>
+          {% for it in items %}
+          <tr>
+            <td>{{ it.label }}</td>
+            <td class="odd">{{ it.odds|fmt_odds }}</td>
+            <td class="muted">{{ it.source }}</td>
+            <td class="odd">{{ it.prob|fmt_prob }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <p>Nessuna quota per questa partita (ancora).</p>
+    <p class="muted">Fai "Aggiorna quote" in alto dopo aver copiato un cURL fresco dalle devtools.</p>
+  </div>
+{% endif %}
+{% endblock %}

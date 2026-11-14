@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}palinsesto {{ day }}{% endblock %}
+{% block main %}
+<div class="daybar">
+  <a class="btn" href="{{ url_for('oggi', date=prev_d) }}">&larr; {{ prev_d }}</a>
+  <h1>Palinsesto {{ day }}</h1>
+  <a class="btn" href="{{ url_for('oggi', date=next_d) }}">{{ next_d }} &rarr;</a>
+</div>
+
+{% if rows %}
+<table class="matches">
+  <thead>
+    <tr>
+      <th>Ora</th><th>Competizione</th>
+      <th class="team">Casa</th><th class="team">Ospite</th>
+      <th>1</th><th>X</th><th>2</th>
+      <th>O 2.5</th><th>U 2.5</th>
+      <th>Goal</th><th>NoGoal</th>
+      <th>Risultato</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.time or '--:--' }}</td>
+      <td class="comp">{{ r.comp }}</td>
+      <td class="team"><a href="{{ url_for('partita', match_id=r.id) }}">{{ r.home }}</a></td>
+      <td class="team">{{ r.away }}</td>
+      <td class="odd">{{ r.q1|fmt_odds }}</td>
+      <td class="odd">{{ r.qx|fmt_odds }}</td>
+      <td class="odd">{{ r.q2|fmt_odds }}</td>
+      <td class="odd">{{ r.qo|fmt_odds }}</td>
+      <td class="odd">{{ r.qu|fmt_odds }}</td>
+      <td class="odd">{{ r.qby|fmt_odds }}</td>
+      <td class="odd">{{ r.qbn|fmt_odds }}</td>
+      <td class="score">
+        {% if r.hg is not none %}{{ r.hg }} - {{ r.ag }}{% else %}&middot;{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="muted">{{ rows|length }} partite · click sul nome di casa per i mercati completi.</p>
+{% else %}
+<div class="empty">
+  <p>Nessuna partita in archivio per questa data.</p>
+  <p class="muted">Lancia <code>python -m betterai sync</code> per i calendari openfootball,
+    e <code>python -m betterai sisal-sync --curl curl.txt</code> per le quote reali.</p>
+</div>
+{% endif %}
+{% endblock %}
