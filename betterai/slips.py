@@ -112,31 +112,58 @@ def generate_custom(con, model, day, *, comps=None, exclude_ids=None,
                 "SELECT match_id, selection FROM legs WHERE slip_id = ?", (sid,))))
         existing.add(key)
 
+    # Pre-calcola le opzioni per ogni match: lista di (sel, p, quota, fonte).
+    # Cosi' possiamo filtrare per famiglia + per range quota per-leg in modo
+    # mirato (altrimenti un range quota totale stretto non viene mai centrato
+    # pescando a caso).
+    all_opts = {}
+    for m in cands:
+        opts = []
+        for sel, p in m["probs"].items():
+            if families is not None and markets.family(sel) not in families:
+                continue
+            if not (0.20 <= p <= 0.98):
+                continue
+            o, src = _leg_odds(real, m["id"], sel, p)
+            opts.append((sel, p, o, src))
+        if opts:
+            all_opts[m["id"]] = opts
+
+    cands_available = [m for m in cands if m["id"] in all_opts]
+    if len(cands_available) < min_legs:
+        con.commit()
+        return []
+
     made = []
-    for _ in range(n_slips * 25):
+    for _ in range(n_slips * 50):
         if len(made) >= n_slips:
             break
         target = rng.randint(min_legs, max_legs)
+        # Quota media per-leg che serve a centrare il range totale.
+        per_leg_lo = min_total_odds ** (1 / target) * 0.75
+        per_leg_hi = max_total_odds ** (1 / target) * 1.30
         legs = []
-        for m in rng.sample(cands, len(cands)):
-            opts = [(s, p) for s, p in m["probs"].items()
-                    if (families is None or markets.family(s) in families)
-                    and 0.20 <= p <= 0.98]
-            if opts:
-                legs.append((m, *rng.choice(opts)))
+        for m in rng.sample(cands_available, len(cands_available)):
+            good = [(s, p, o, src) for (s, p, o, src) in all_opts[m["id"]]
+                    if per_leg_lo <= o <= per_leg_hi]
+            if not good:
+                continue
+            s, p, o, src = rng.choice(good)
+            legs.append((m, s, p, o, src))
             if len(legs) == target:
                 break
         if len(legs) < min_legs:
             continue
-        sig = tuple(sorted((m["id"], s) for m, s, _ in legs))
+        sig = tuple(sorted((m["id"], s) for m, s, *_ in legs))
         if sig in existing:
             continue
-        priced = [(_leg_odds(real, m["id"], s, p), m, s, p) for m, s, p in legs]
         total = 1.0
-        for (o, _), _, _, _ in priced:
+        for _, _, _, o, _ in legs:
             total *= o
         if not (min_total_odds <= total <= max_total_odds):
             continue
+        # da qui in poi 'priced' nel formato originale per lo store
+        priced = [((o, src), m, s, p) for (m, s, p, o, src) in legs]
         existing.add(sig)
         slip_id = con.execute(
             "INSERT INTO slips(date, strategy, odds, stake) VALUES (?,?,?,?)",
