@@ -1,44 +1,76 @@
-"""Quote reali dalla mobile api di Sisal.
+"""Quote reali dall'api web di Sisal.
 
-Il sito desktop sta dietro Akamai Bot Manager (sensor_data, _abck): senza un
-browser vero non si passa. L'app Android/iOS, invece, parla con un endpoint
-JSON "pulito" (nessun sensor, bastano User-Agent + Accept-Language).
+Endpoint vero (scoperto via Chrome DevTools, Network > Fetch/XHR > Size desc):
 
-Ricetta per riempire SISAL_BASE / SISAL_PATH / SISAL_HEADERS:
-  1. mitmproxy -p 8080 (scarica la CA sul telefono).
-  2. sul telefono: proxy -> IP_PC:8080. Apri l'app Sisal, vai su Calcio ->
-     Serie A, fai qualche tap sulle partite.
-  3. nel log di mitmproxy cerca le GET verso api.sisal.it o
-     www.sisal.it/api-pdp-matchboard/. Copia URL completo e tutti gli header.
-  4. incolla qui o esporta via variabili d'ambiente SISAL_BASE / SISAL_PATH.
-  5. python -m betterai sisal-probe --dump data/raw/sisal.json
-     Guarda la struttura; se non combacia con parse_events, aggiusta le chiavi.
+  GET https://betting.sisal.it/api/lettura-palinsesto-sport/palinsesto/prematch/
+      schedaDisciplina/{disciplina}/1/80/1000001?offerId=0
 
-Sisal controlla l'IP: da fuori Italia la lista eventi torna vuota. Serve un
-IP IT (casa, residential proxy o VPS italiano). Non vale la pena ciclare
-proxy: una fetch al giorno basta.
+con disciplina = 1 per il calcio. Risposta ~15 MB con TUTTO il palinsesto
+prematch calcio del brand (423+ eventi, 1800+ mercati, 3800+ quote-set).
+
+Shape (chiavi che ci interessano):
+
+  avvenimentoFeList[i] = {
+    descrizione: "Casa - Ospite",
+    data:        "2026-11-14T14:00:00.000Z",
+    codiceManifestazione: 1049,
+    scommessaKeyDataList: [
+      {codiceScommessa: 3,     key: "palin-avven-3"},     # 1X2
+      {codiceScommessa: 28319, key: "palin-avven-28319"}, # DC
+      {codiceScommessa: 7989,  key: "palin-avven-7989"},  # U/O (linee multiple)
+      {codiceScommessa: 18,    key: "palin-avven-18"},    # Goal/NoGoal
+      {codiceScommessa: 30562, key: "palin-avven-30562"}, # Multigoal totale (ignorato)
+    ],
+  }
+
+  infoAggiuntivaMap["palin-avven-codiceScommessa-idInfoAggiuntiva"] = {
+    stato:    1,                  # 1 = attivo
+    soglia:   "2.5",              # linea U/O o vuoto
+    esitoList: [
+      {descrizione: "1",     quota: 205, stato: 1},   # 2.05 (quota * 100)
+      {descrizione: "OVER",  quota: 145, stato: 1},   # 1.45
+    ],
+  }
+
+Protezione Akamai: serve un browser vero per generare cookies (_abck, bm_sz,
+ak_bmsc) e il header Akamai-BM-Telemetry. I cookies durano ~30-60 min, dopo
+scadono e si prende 401/403. Workflow suggerito:
+  1. apri la pagina palinsesto in Chrome/Brave/Edge una volta al giorno;
+  2. DevTools -> Network -> trova l'xhr schedaDisciplina (~1 MB) -> Copy as
+     cURL -> salva in curl.txt;
+  3. passa il curl a fetch_from_curl() oppure riempi SISAL_* qui sotto.
+
+Per il daily automatizzato serve un passaggio headless-browser (patchright /
+camoufox) che ri-genera i cookies: non implementato qui, tool dedicato.
 """
 import json
 import os
+import re
+import shlex
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 
 from .db import team_id
 
-SISAL_BASE = os.environ.get("SISAL_BASE", "https://www.sisal.it")
+SISAL_BASE = os.environ.get("SISAL_BASE", "https://betting.sisal.it")
 SISAL_PATH = os.environ.get(
-    "SISAL_PATH", "/api-pdp-matchboard/v3/sport/calcio/palinsesto")
+    "SISAL_PATH",
+    "/api/lettura-palinsesto-sport/palinsesto/prematch/schedaDisciplina/1/1/80/1000001?offerId=0")
 SISAL_HEADERS = {
-    "User-Agent": "sisal-mobile/6.9 (iPhone; iOS 17.5; Scale/3.00)",
-    "Accept": "application/json",
+    "Accept": "*/*",
     "Accept-Language": "it-IT,it;q=0.9",
-    "X-Device-Platform": "ios",
+    "Origin": "https://www.sisal.it",
+    "Referer": "https://www.sisal.it/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    "bet-brand": "175",
+    "bet-locale": "it_IT",
+    "bet-offer": "0",
 }
 
 # Nomi come li scrive Sisal -> come stanno nel db (fonte openfootball).
-# Da estendere: ogni nome non in mappa resta uguale e, se non combacia col
-# calendario, risulta come partita a se'.
 TEAM_ALIASES = {
     "F.C. Internazionale": "Inter", "Internazionale": "Inter", "Inter": "Inter",
     "A.C. Milan": "AC Milan", "Milan": "AC Milan",
@@ -46,59 +78,46 @@ TEAM_ALIASES = {
     "A.S. Roma": "AS Roma", "Roma": "AS Roma",
     "S.S. Lazio": "SS Lazio", "Lazio": "SS Lazio",
     "S.S.C. Napoli": "SSC Napoli", "Napoli": "SSC Napoli",
-    "Atalanta": "Atalanta BC",
-    "Fiorentina": "ACF Fiorentina",
+    "Atalanta": "Atalanta BC", "Fiorentina": "ACF Fiorentina",
     "Hellas Verona": "Hellas Verona FC", "Verona": "Hellas Verona FC",
-    "Torino": "Torino FC",
-    "Bologna": "Bologna FC",
-    "Udinese": "Udinese Calcio",
-    "Genoa": "Genoa CFC",
-    "Cagliari": "Cagliari Calcio",
-    "Lecce": "US Lecce",
-    "Empoli": "Empoli FC",
-    "Parma": "Parma Calcio 1913",
-    "Como": "Como 1907",
-    "Monza": "AC Monza",
-    "Venezia": "Venezia FC",
-    "Cremonese": "US Cremonese",
-    "Sassuolo": "US Sassuolo",
-    "Pisa": "Pisa SC",
+    "Torino": "Torino FC", "Bologna": "Bologna FC",
+    "Udinese": "Udinese Calcio", "Genoa": "Genoa CFC",
+    "Cagliari": "Cagliari Calcio", "Lecce": "US Lecce",
+    "Empoli": "Empoli FC", "Parma": "Parma Calcio 1913",
+    "Como": "Como 1907", "Monza": "AC Monza", "Venezia": "Venezia FC",
+    "Cremonese": "US Cremonese", "Sassuolo": "US Sassuolo", "Pisa": "Pisa SC",
 }
 
-MULTIGOL_RANGES = ("0-1", "1-2", "1-3", "2-3", "2-4")
-UO_LINES = ("1.5", "2.5", "3.5")
+# codiceScommessa -> famiglia mercato
+MARKET_1X2 = 3
+MARKET_DC = 28319
+MARKET_UO = 7989
+MARKET_BTTS = 18
+WANTED_MARKETS = {MARKET_1X2, MARKET_DC, MARKET_UO, MARKET_BTTS}
+
+UO_LINES_OK = {"1.5", "2.5", "3.5"}
+
+_CURL_DROP_HEADERS = {"if-none-match", "if-modified-since", "content-length", "host"}
 
 
-def translate_selection(bet_type, label):
-    """Etichetta Sisal -> codice markets.py. None se non e' un esito che modello.
-
-    Shape tipica dei bet_type Sisal:
-      "1X2" / "Esito finale" , "Doppia chance", "Goal/Nogoal",
-      "U/O 2.5" o "Under/Over 2.5", "Multigol casa 1-3", "Multigol ospite 2-4".
-    """
-    bt = (bet_type or "").upper().strip()
-    lb = (label or "").upper().strip().replace(",", ".")
-    if bt in ("1X2", "ESITO FINALE") and lb in ("1", "X", "2"):
-        return f"R:{lb}"
-    if bt in ("DC", "DOPPIA CHANCE") and lb in ("1X", "X2", "12"):
-        return f"R:{lb}"
-    if bt in ("BTTS", "GOAL/NOGOAL", "GOL/NOGOL"):
-        if lb in ("GOAL", "GOL"):
+def translate_outcome(codice_scommessa, outcome_desc, soglia):
+    """(codiceScommessa, descrizione esito, soglia) -> codice markets betterai.
+    None se non e' un esito modellato."""
+    o = (outcome_desc or "").upper().strip()
+    if codice_scommessa == MARKET_1X2 and o in ("1", "X", "2"):
+        return f"R:{o}"
+    if codice_scommessa == MARKET_DC and o in ("1X", "X2", "12"):
+        return f"R:{o}"
+    if codice_scommessa == MARKET_BTTS:
+        if o == "GOAL":
             return "BTTS:Y"
-        if lb in ("NOGOAL", "NOGOL", "NO GOAL", "NO GOL"):
+        if o == "NOGOAL":
             return "BTTS:N"
-    if "UNDER" in bt or "OVER" in bt or bt.startswith("U/O"):
-        for part in (bt + " " + lb).replace("/", " ").split():
-            if part in UO_LINES:
-                if "UNDER" in lb:
-                    return f"TG:U{part}"
-                if "OVER" in lb:
-                    return f"TG:O{part}"
-    if bt.startswith("MULTIGOL CASA") and lb in MULTIGOL_RANGES:
-        return f"HG:{lb}"
-    if (bt.startswith("MULTIGOL OSPITE") or bt.startswith("MULTIGOL TRASFERTA")) \
-            and lb in MULTIGOL_RANGES:
-        return f"AG:{lb}"
+    if codice_scommessa == MARKET_UO and (soglia or "").strip() in UO_LINES_OK:
+        if o == "UNDER":
+            return f"TG:U{soglia.strip()}"
+        if o == "OVER":
+            return f"TG:O{soglia.strip()}"
     return None
 
 
@@ -116,44 +135,110 @@ def _season_of(date_str):
     return f"{y - 1}-{str(y)[-2:]}"
 
 
-def fetch(path=None, params=None, timeout=20):
-    """GET json da Sisal. Stdlib, zero dipendenze. Raise su errore."""
+def parse_curl(text):
+    """Parsea un 'Copy as cURL (bash)' da DevTools. Ritorna (url, headers_dict).
+    Scarta If-None-Match e simili per evitare 304 vuoti sul replay."""
+    text = re.sub(r"\\\s*\n", " ", text)
+    text = re.sub(r"\^\s*\r?\n", " ", text)
+    toks = shlex.split(text.strip(), posix=True)
+    if not toks or toks[0] != "curl":
+        raise ValueError("input non e' un comando curl")
+    url = None
+    headers = {}
+    takes_arg = {"-H", "--header", "-A", "--user-agent", "-b", "--cookie",
+                 "-e", "--referer", "-X", "--request", "--url",
+                 "-d", "--data", "--data-raw", "--data-binary", "--data-urlencode"}
+    i = 1
+    while i < len(toks):
+        t = toks[i]
+        if t in ("-H", "--header"):
+            k, _, v = toks[i + 1].partition(":")
+            if k.strip().lower() not in _CURL_DROP_HEADERS:
+                headers[k.strip()] = v.strip()
+            i += 2
+        elif t in ("-A", "--user-agent"):
+            headers["User-Agent"] = toks[i + 1]; i += 2
+        elif t in ("-b", "--cookie"):
+            headers["Cookie"] = toks[i + 1]; i += 2
+        elif t in ("-e", "--referer"):
+            headers["Referer"] = toks[i + 1]; i += 2
+        elif t == "--url":
+            url = toks[i + 1]; i += 2
+        elif t in takes_arg:
+            i += 2
+        elif t.startswith("-"):
+            i += 1
+        else:
+            if url is None:
+                url = t
+            i += 1
+    if not url:
+        raise ValueError("url non trovato nel curl")
+    return url, headers
+
+
+def fetch(path=None, headers=None, timeout=30):
+    """GET json da Sisal. Stdlib. Raise su errore."""
     url = f"{SISAL_BASE}{path or SISAL_PATH}"
-    if params:
-        url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers=SISAL_HEADERS)
+    req = urllib.request.Request(url, headers=headers or SISAL_HEADERS)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.load(r)
+
+
+def fetch_from_curl(curl_text, timeout=30):
+    """Fetch replaying a 'Copy as cURL (bash)' from DevTools (cookies + headers
+    inclusi)."""
+    url, headers = parse_curl(curl_text)
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.load(r)
 
 
 def parse_events(payload):
-    """JSON Sisal -> lista di partite con le loro quote.
+    """Risposta schedaDisciplina -> [{date, time, home, away, quotes: {sel: odds}}].
 
-    Chiavi attese (da verificare dopo mitm; aggiusta i get se differenti):
-      payload["eventi"][*] = {
-        "dataOra": "2026-11-20T20:45", "casa": "...", "ospite": "...",
-        "quote": [{"tipo": "1X2", "esito": "1", "quota": 1.85}, ...]}
-    """
-    events = payload.get("eventi") or payload.get("events") or []
+    Ignora i mercati non modellati da betterai (MULTIGOAL totale ecc.).
+    Le quote sono interi * 100 (205 -> 2.05)."""
+    iam = payload.get("infoAggiuntivaMap") or {}
+    # index: market_key ("palin-avven-codScom") -> [infoAggiuntiva, ...]
+    iam_index = defaultdict(list)
+    for ik, iv in iam.items():
+        parent, _, _ = ik.rpartition("-")
+        if parent:
+            iam_index[parent].append(iv)
+
     out = []
-    for ev in events:
-        dt = ev.get("dataOra") or ev.get("startTime") or ev.get("kickOff") or ""
-        date_part, _, time_part = dt.partition("T")
+    for ev in payload.get("avvenimentoFeList") or []:
+        desc = ev.get("descrizione") or ""
+        if " - " not in desc:
+            continue
+        home_raw, away_raw = desc.split(" - ", 1)
+        data = ev.get("data") or ""
+        date_part, _, time_part = data.partition("T")
         if not date_part:
             continue
         quotes = {}
-        for q in ev.get("quote") or ev.get("odds") or []:
-            sel = translate_selection(
-                q.get("tipo") or q.get("marketType") or "",
-                q.get("esito") or q.get("outcome") or q.get("label") or "")
-            price = q.get("quota") or q.get("price") or q.get("odds")
-            if sel and price:
-                quotes[sel] = float(price)
+        for mkt in ev.get("scommessaKeyDataList") or []:
+            cs = mkt.get("codiceScommessa")
+            if cs not in WANTED_MARKETS:
+                continue
+            mk = mkt.get("key")
+            for iv in iam_index.get(mk, []):
+                if iv.get("stato") != 1:
+                    continue
+                soglia = (iv.get("soglia") or "").strip()
+                for esito in iv.get("esitoList") or []:
+                    if esito.get("stato") != 1:
+                        continue
+                    sel = translate_outcome(cs, esito.get("descrizione"), soglia)
+                    q = esito.get("quota")
+                    if sel and q:
+                        quotes[sel] = round(q / 100.0, 2)
         out.append({
             "date": date_part,
             "time": time_part[:5] or None,
-            "home": _team_name(ev.get("casa") or ev.get("home") or ""),
-            "away": _team_name(ev.get("ospite") or ev.get("away") or ""),
+            "home": _team_name(home_raw),
+            "away": _team_name(away_raw),
             "quotes": quotes,
         })
     return out
@@ -189,11 +274,20 @@ def store(con, comp, events, source="sisal"):
     return n_matches, n_quotes
 
 
-def sync(con, comp="it.1", log=print):
+def sync(con, comp="it.1", curl_file=None, log=print):
+    """Scarica, parsa, salva. curl_file: path a un 'Copy as cURL (bash)' di
+    DevTools (cookies freschi inclusi); se None usa SISAL_HEADERS."""
     try:
-        payload = fetch()
+        if curl_file:
+            with open(curl_file, encoding="utf-8") as f:
+                payload = fetch_from_curl(f.read())
+        else:
+            payload = fetch()
+    except urllib.error.HTTPError as e:
+        log(f"sisal: HTTP {e.code} ({e.reason}); probabilmente cookies scaduti")
+        return 0, 0
     except urllib.error.URLError as e:
-        log(f"sisal: errore rete ({e}); verifica mitm + IP italiano")
+        log(f"sisal: errore rete ({e})")
         return 0, 0
     events = parse_events(payload)
     m, q = store(con, comp, events)

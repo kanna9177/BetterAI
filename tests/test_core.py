@@ -86,20 +86,87 @@ class CycleTest(unittest.TestCase):
         self.assertGreater(q("SELECT COUNT(*) FROM legs WHERE result = -1"), 0)
 
 
+def _fake_sisal_payload():
+    """Mini payload con la shape vera dell'endpoint schedaDisciplina:
+    Inter - Milan con 1X2 + DC + Goal/Nogoal + U/O 2.5 + MULTIGOAL (ignorato).
+    Un secondo evento (Juve - Napoli) con solo 1X2 e un esito sospeso."""
+    return {
+        "avvenimentoFeList": [
+            {
+                "descrizione": "F.C. Internazionale - A.C. Milan",
+                "data": "2026-11-20T19:45:00.000Z",
+                "scommessaKeyDataList": [
+                    {"codiceScommessa": 3,     "key": "100-500-3"},
+                    {"codiceScommessa": 28319, "key": "100-500-28319"},
+                    {"codiceScommessa": 18,    "key": "100-500-18"},
+                    {"codiceScommessa": 7989,  "key": "100-500-7989"},
+                    {"codiceScommessa": 30562, "key": "100-500-30562"},  # multigoal ignorato
+                ],
+            },
+            {
+                "descrizione": "Juventus - Napoli",
+                "data": "2026-11-21T14:00:00.000Z",
+                "scommessaKeyDataList": [{"codiceScommessa": 3, "key": "100-501-3"}],
+            },
+        ],
+        "infoAggiuntivaMap": {
+            "100-500-3-0": {"stato": 1, "soglia": "", "esitoList": [
+                {"descrizione": "1", "quota": 185, "stato": 1},
+                {"descrizione": "X", "quota": 360, "stato": 1},
+                {"descrizione": "2", "quota": 420, "stato": 1},
+            ]},
+            "100-500-28319-0": {"stato": 1, "soglia": "", "esitoList": [
+                {"descrizione": "1X", "quota": 125, "stato": 1},
+                {"descrizione": "X2", "quota": 170, "stato": 1},
+                {"descrizione": "12", "quota": 140, "stato": 1},
+            ]},
+            "100-500-18-0": {"stato": 1, "soglia": "", "esitoList": [
+                {"descrizione": "GOAL",   "quota": 165, "stato": 1},
+                {"descrizione": "NOGOAL", "quota": 220, "stato": 1},
+            ]},
+            "100-500-7989-150": {"stato": 1, "soglia": "1.5", "esitoList": [
+                {"descrizione": "UNDER", "quota": 500, "stato": 1},
+                {"descrizione": "OVER",  "quota": 110, "stato": 1},
+            ]},
+            "100-500-7989-250": {"stato": 1, "soglia": "2.5", "esitoList": [
+                {"descrizione": "UNDER", "quota": 240, "stato": 1},
+                {"descrizione": "OVER",  "quota": 180, "stato": 1},
+            ]},
+            "100-500-7989-350": {"stato": 1, "soglia": "3.5", "esitoList": [
+                {"descrizione": "UNDER", "quota": 160, "stato": 1},
+                {"descrizione": "OVER",  "quota": 210, "stato": 1},
+            ]},
+            "100-500-7989-550": {"stato": 1, "soglia": "5.5", "esitoList": [
+                # linea fuori dal catalogo betterai -> ignorata
+                {"descrizione": "UNDER", "quota": 105, "stato": 1},
+            ]},
+            "100-500-30562-0": {"stato": 1, "soglia": "", "esitoList": [
+                # multigoal totale, non modellato in betterai -> ignorato
+                {"descrizione": "1-3", "quota": 150, "stato": 1},
+            ]},
+            "100-501-3-0": {"stato": 1, "soglia": "", "esitoList": [
+                {"descrizione": "1", "quota": 170, "stato": 1},
+                {"descrizione": "X", "quota": 340, "stato": 1},
+                {"descrizione": "2", "quota": 450, "stato": 0},  # sospeso -> saltato
+            ]},
+        },
+    }
+
+
 class SisalTest(unittest.TestCase):
-    def test_translate_selection(self):
-        t = sisal.translate_selection
-        self.assertEqual(t("1X2", "1"), "R:1")
-        self.assertEqual(t("Esito finale", "X"), "R:X")
-        self.assertEqual(t("Doppia chance", "X2"), "R:X2")
-        self.assertEqual(t("Goal/Nogoal", "GOAL"), "BTTS:Y")
-        self.assertEqual(t("Goal/Nogoal", "NOGOAL"), "BTTS:N")
-        self.assertEqual(t("U/O 2.5", "UNDER 2.5"), "TG:U2.5")
-        self.assertEqual(t("Under/Over 2,5", "OVER 2,5"), "TG:O2.5")
-        self.assertEqual(t("Multigol casa", "1-3"), "HG:1-3")
-        self.assertEqual(t("Multigol ospite", "2-4"), "AG:2-4")
-        self.assertIsNone(t("Marcatore", "Lautaro"))
-        self.assertIsNone(t("1X2", "pareggio"))
+    def test_translate_outcome(self):
+        t = sisal.translate_outcome
+        self.assertEqual(t(sisal.MARKET_1X2, "1", ""), "R:1")
+        self.assertEqual(t(sisal.MARKET_1X2, "X", ""), "R:X")
+        self.assertEqual(t(sisal.MARKET_DC, "1X", ""), "R:1X")
+        self.assertEqual(t(sisal.MARKET_DC, "X2", ""), "R:X2")
+        self.assertEqual(t(sisal.MARKET_BTTS, "GOAL", ""), "BTTS:Y")
+        self.assertEqual(t(sisal.MARKET_BTTS, "NOGOAL", ""), "BTTS:N")
+        self.assertEqual(t(sisal.MARKET_UO, "UNDER", "2.5"), "TG:U2.5")
+        self.assertEqual(t(sisal.MARKET_UO, "OVER", "3.5"), "TG:O3.5")
+        self.assertIsNone(t(sisal.MARKET_UO, "OVER", "5.5"))  # linea fuori catalogo
+        self.assertIsNone(t(sisal.MARKET_1X2, "pareggio", ""))
+        self.assertIsNone(t(99999, "1", ""))
 
     def test_season_of(self):
         self.assertEqual(sisal._season_of("2026-11-20"), "2026-27")
@@ -107,42 +174,50 @@ class SisalTest(unittest.TestCase):
         self.assertEqual(sisal._season_of("2026-07-01"), "2026-27")
         self.assertEqual(sisal._season_of("2026-06-30"), "2025-26")
 
+    def test_parse_curl_strips_conditional_headers(self):
+        text = """curl 'https://x.example/api?z=1' \\
+          -H 'Accept: application/json' \\
+          -H 'If-None-Match: "abc"' \\
+          -H 'User-Agent: test/1' \\
+          -b 'session=42'"""
+        url, hdrs = sisal.parse_curl(text)
+        self.assertEqual(url, "https://x.example/api?z=1")
+        self.assertNotIn("If-None-Match", hdrs)
+        self.assertEqual(hdrs["Cookie"], "session=42")
+        self.assertEqual(hdrs["User-Agent"], "test/1")
+
     def test_parse_and_store(self):
         con = db.connect(":memory:")
-        payload = {"eventi": [{
-            "dataOra": "2026-11-20T20:45",
-            "casa": "F.C. Internazionale", "ospite": "A.C. Milan",
-            "quote": [
-                {"tipo": "1X2", "esito": "1", "quota": 1.85},
-                {"tipo": "1X2", "esito": "X", "quota": 3.60},
-                {"tipo": "1X2", "esito": "2", "quota": 4.20},
-                {"tipo": "Doppia chance", "esito": "1X", "quota": 1.25},
-                {"tipo": "Goal/Nogoal", "esito": "GOAL", "quota": 1.65},
-                {"tipo": "U/O 2.5", "esito": "OVER 2.5", "quota": 1.80},
-                {"tipo": "Multigol casa", "esito": "1-3", "quota": 1.40},
-                {"tipo": "Marcatore", "esito": "Lautaro", "quota": 2.50},
-            ],
-        }, {
-            "dataOra": "2026-11-21T15:00",
-            "casa": "Juventus", "ospite": "Napoli",
-            "quote": [{"tipo": "1X2", "esito": "2", "quota": 2.10}],
-        }]}
-        events = sisal.parse_events(payload)
+        events = sisal.parse_events(_fake_sisal_payload())
         self.assertEqual(len(events), 2)
         inter_milan, juve_napoli = events
+
         self.assertEqual(inter_milan["home"], "Inter")
         self.assertEqual(inter_milan["away"], "AC Milan")
         self.assertEqual(inter_milan["date"], "2026-11-20")
-        self.assertEqual(inter_milan["time"], "20:45")
-        self.assertNotIn("Marcatore", inter_milan["quotes"])  # non modellato -> scartato
-        self.assertEqual(inter_milan["quotes"]["R:1"], 1.85)
-        self.assertEqual(inter_milan["quotes"]["BTTS:Y"], 1.65)
-        self.assertEqual(inter_milan["quotes"]["TG:O2.5"], 1.80)
-        self.assertEqual(inter_milan["quotes"]["HG:1-3"], 1.40)
+        self.assertEqual(inter_milan["time"], "19:45")
+        q = inter_milan["quotes"]
+        self.assertEqual(q["R:1"], 1.85)
+        self.assertEqual(q["R:X"], 3.60)
+        self.assertEqual(q["R:2"], 4.20)
+        self.assertEqual(q["R:1X"], 1.25)
+        self.assertEqual(q["R:X2"], 1.70)
+        self.assertEqual(q["R:12"], 1.40)
+        self.assertEqual(q["BTTS:Y"], 1.65)
+        self.assertEqual(q["BTTS:N"], 2.20)
+        self.assertEqual(q["TG:O1.5"], 1.10)
+        self.assertEqual(q["TG:O2.5"], 1.80)
+        self.assertEqual(q["TG:U3.5"], 1.60)
+        # 3 (1X2) + 3 (DC) + 2 (BTTS) + 2*3 (U/O 1.5/2.5/3.5) = 14;
+        # multigoal totale e U/O 5.5 scartati
+        self.assertEqual(len(q), 14)
 
-        m, q = sisal.store(con, "it.1", events)
+        # esito sospeso (stato=0) non entra
+        self.assertEqual(juve_napoli["quotes"], {"R:1": 1.70, "R:X": 3.40})
+
+        m, nq = sisal.store(con, "it.1", events)
         self.assertEqual(m, 2)
-        self.assertEqual(q, 7 + 1)  # 7 quote Inter-Milan modellate, 1 Juve-Napoli
+        self.assertEqual(nq, 14 + 2)
         row = con.execute(
             """SELECT o.odds FROM odds o JOIN matches m ON m.id = o.match_id
                JOIN teams h ON h.id = m.home_id
@@ -151,7 +226,7 @@ class SisalTest(unittest.TestCase):
         # re-store aggiorna invece di duplicare
         sisal.store(con, "it.1", events)
         self.assertEqual(
-            con.execute("SELECT COUNT(*) FROM odds").fetchone()[0], 8)
+            con.execute("SELECT COUNT(*) FROM odds").fetchone()[0], 16)
 
 
 if __name__ == "__main__":

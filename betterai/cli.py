@@ -111,14 +111,19 @@ def cmd_slips(con, args):
 
 
 def cmd_sisal_sync(con, args):
-    sisal.sync(con, comp=args.comp)
+    sisal.sync(con, comp=args.comp, curl_file=args.curl)
 
 
 def cmd_sisal_probe(con, args):
-    """Scarica la risposta grezza di Sisal e mostra quante partite ne escono.
-    Serve a vedere la struttura JSON reale (poi aggiusti parse_events)."""
+    """Scarica (o rilegge) la risposta grezza di Sisal, parsa e stampa un sommario.
+    Usa --curl per replayare un 'Copy as cURL (bash)' da DevTools
+    (necessario a meno che i cookies in SISAL_HEADERS siano freschi)."""
     try:
-        payload = sisal.fetch(path=args.path)
+        if args.curl:
+            with open(args.curl, encoding="utf-8") as f:
+                payload = sisal.fetch_from_curl(f.read())
+        else:
+            payload = sisal.fetch(path=args.path)
     except Exception as e:
         print(f"errore: {e}")
         return
@@ -129,8 +134,11 @@ def cmd_sisal_probe(con, args):
     print(f"salvato {out} ({len(json.dumps(payload))} byte)")
     print(f"partite estratte: {len(events)}")
     if events:
+        with_quotes = sum(1 for e in events if e["quotes"])
+        n_quotes = sum(len(e["quotes"]) for e in events)
         e = events[0]
-        print(f"prima: {e['date']} {e['time'] or ''} {e['home']} - {e['away']}, "
+        print(f"  con quote: {with_quotes}, quote totali: {n_quotes}")
+        print(f"  prima: {e['date']} {e['time'] or ''} {e['home']} - {e['away']}, "
               f"{len(e['quotes'])} quote")
 
 
@@ -181,9 +189,11 @@ def main(argv=None):
     p.set_defaults(fn=cmd_team)
     p = sub.add_parser("sisal-sync", help="scarica quote reali da Sisal (vedi betterai/sisal.py)")
     p.add_argument("--comp", default="it.1")
+    p.add_argument("--curl", help="file con un 'Copy as cURL (bash)' da DevTools")
     p.set_defaults(fn=cmd_sisal_sync)
-    p = sub.add_parser("sisal-probe", help="dump della risposta grezza Sisal per capirne la shape")
+    p = sub.add_parser("sisal-probe", help="dump della risposta grezza Sisal e sommario")
     p.add_argument("--path", help="override di SISAL_PATH")
+    p.add_argument("--curl", help="file con un 'Copy as cURL (bash)' da DevTools")
     p.add_argument("--dump", help="file dove scrivere la risposta (default sisal_probe.json)")
     p.set_defaults(fn=cmd_sisal_probe)
     args = ap.parse_args(argv)
