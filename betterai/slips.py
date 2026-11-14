@@ -75,6 +75,7 @@ def _leg_odds(real, match_id, selection, prob):
 def generate_custom(con, model, day, *, comps=None, exclude_ids=None,
                     families=None, min_legs=3, max_legs=5,
                     min_total_odds=1.5, max_total_odds=10.0,
+                    max_per_leg=None, only_real_odds=False,
                     n_slips=10, seed="ai", strategy_name="ai-custom"):
     """Genera schedine su misura. Ritorna la lista di slip_id creati.
 
@@ -125,6 +126,10 @@ def generate_custom(con, model, day, *, comps=None, exclude_ids=None,
             if not (0.20 <= p <= 0.98):
                 continue
             o, src = _leg_odds(real, m["id"], sel, p)
+            if only_real_odds and src == ESTIMATED:
+                continue
+            if max_per_leg is not None and o > max_per_leg:
+                continue
             opts.append((sel, p, o, src))
         if opts:
             all_opts[m["id"]] = opts

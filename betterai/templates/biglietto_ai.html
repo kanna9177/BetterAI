@@ -57,6 +57,22 @@
     </div>
     <p class="muted">Solo combinazioni la cui quota totale cade in questo intervallo
       vengono accettate.</p>
+
+    <label style="margin-top:12px">Quota max per singola partita (opzionale)</label>
+    <div class="row">
+      <input type="number" name="max_per_leg" step="0.01" min="1.01" max="100"
+             placeholder="es. 1.20"
+             value="{{ form.max_per_leg or '' }}">
+    </div>
+    <p class="muted">Se compilato, nessuna leg puo' superare questa quota
+      (per schedine conservative). Lascia vuoto per disattivare.</p>
+
+    <label class="toggle" style="margin-top:12px">
+      <input type="checkbox" name="only_real" value="on"
+             {% if not form or form.get('only_real') == 'on' %}checked{% endif %}>
+      <span>Solo quote Sisal</span>
+      <small>(garantisce bottone "Giocala su Sisal" su ogni schedina)</small>
+    </label>
   </section>
 
   <section>

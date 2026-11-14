@@ -256,6 +256,7 @@ def create_app(db_path=db.DEFAULT_PATH):
             sel_families = set(request.form.getlist("family")) or None
             seed = (secrets.token_hex(4) if request.form.get("randomize") == "on"
                     else request.form.get("seed") or "mario")
+            raw_max_leg = request.form.get("max_per_leg", "").strip()
             try:
                 opts = dict(
                     comps=sel_comps,
@@ -264,6 +265,8 @@ def create_app(db_path=db.DEFAULT_PATH):
                     max_legs=int(request.form.get("max_legs", 5)),
                     min_total_odds=float(request.form.get("min_odds", 1.8)),
                     max_total_odds=float(request.form.get("max_odds", 3.5)),
+                    max_per_leg=float(raw_max_leg) if raw_max_leg else None,
+                    only_real_odds=request.form.get("only_real") == "on",
                     n_slips=int(request.form.get("n_slips", 10)),
                     seed=seed,
                 )
