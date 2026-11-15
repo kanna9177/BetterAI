@@ -64,7 +64,16 @@ python -m betterai web               # http://127.0.0.1:5000
 python -m unittest discover -s tests
 ```
 
-## Quote reali da Sisal
+## Quote reali da Sisal (automatiche)
+
+Da `run.bat` (Windows): ad ogni avvio apre Sisal in chromium headless
+tramite Playwright, cattura il cURL del palinsesto con cookies freschi,
+e lo salva in `curl.txt`. Poi `sisal-sync` lo replaya e aggiorna il db.
+Serve italiana IP (casa). Prima volta installa anche chromium (~400 MB).
+
+Manuale (se il warmup fallisce):
+
+## Quote reali da Sisal (manuale)
 
 Sisal protegge l'endpoint con Akamai Bot Manager: serve un browser vero per
 generare i cookies (`_abck`, `bm_sz`, `ak_bmsc`). Workflow una volta al giorno:

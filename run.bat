@@ -57,17 +57,32 @@ echo.
 echo   [2/6] scarico calendari + risultati nuovi ^(openfootball^)...
 %PY% -m betterai sync
 
-rem --- Auto-refresh quote se abbiamo un curl fresco o un dump json salvato
+rem --- Warmup Sisal via Playwright: rigenera curl.txt coi cookie freschi
+rem     ad ogni avvio. Se playwright non e' installato (o chromium manca) fa
+rem     silently fallback al curl.txt esistente.
+echo.
+echo   [3/6] warmup Sisal ^(rigenera curl.txt via browser headless^)...
+%PY% -c "import playwright" 2>nul
+if errorlevel 1 (
+    echo   [i] playwright non installato: installo ^(~400 MB, una tantum^)...
+    %PY% -m pip install -q playwright
+    %PY% -m playwright install chromium
+)
+%PY% -m betterai sisal-warmup --timeout 90
+if errorlevel 1 (
+    echo   [!!] warmup fallito. Uso il curl.txt esistente se c'e'.
+)
+
 if exist curl.txt (
     echo.
-    echo   [3/6] trovato curl.txt: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
+    echo   [i] sisal-sync da curl.txt ^(auto-migra db se serve^)...
     %PY% -m betterai sisal-sync --curl curl.txt
 ) else if exist sisal.json (
     echo.
-    echo   [3/6] trovato sisal.json: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
+    echo   [i] sisal-sync da sisal.json ^(backup offline^)...
     %PY% -m betterai sisal-sync --json sisal.json
 ) else (
-    echo   [3/6] nessun curl.txt / sisal.json ^(skip quote^).
+    echo   [i] nessun curl.txt / sisal.json ^(skip quote^).
 )
 
 echo.

@@ -1,2 +1,5 @@
 numpy>=1.24
 flask>=3.0
+# Opzionale: serve solo per 'sisal-warmup' (rigenera curl.txt automaticamente).
+# Dopo il pip install serve anche: playwright install chromium
+playwright>=1.40

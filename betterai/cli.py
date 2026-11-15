@@ -162,6 +162,16 @@ def cmd_sisal_probe(con, args):
               f"{len(e['quotes'])} quote")
 
 
+def cmd_sisal_warmup(con, args):
+    """Chiama sisal_warmup.main() con gli argomenti forniti."""
+    con.close()
+    from . import sisal_warmup
+    argv = ["--out", args.out, "--timeout", str(args.timeout)]
+    if args.debug:
+        argv.append("--debug")
+    sisal_warmup.main(argv)
+
+
 def cmd_sisal_manifestazioni(con, args):
     """Aggiorna la mappa codice manifestazione -> nome leggibile a partire da
     un dump della risposta alberaturaPrematch."""
@@ -265,6 +275,12 @@ def main(argv=None):
     p.add_argument("--port", type=int, default=5000)
     p.add_argument("--debug", action="store_true")
     p.set_defaults(fn=cmd_web)
+    p = sub.add_parser("sisal-warmup",
+                       help="apre Sisal headless (playwright), rigenera curl.txt fresco")
+    p.add_argument("--out", default="curl.txt")
+    p.add_argument("--timeout", type=int, default=90)
+    p.add_argument("--debug", action="store_true", help="browser visibile")
+    p.set_defaults(fn=cmd_sisal_warmup)
     p = sub.add_parser("sisal-manifestazioni",
                        help="aggiorna la mappa codice manifestazione -> nome leggibile")
     p.add_argument("--json", required=True,
