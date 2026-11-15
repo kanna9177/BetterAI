@@ -45,6 +45,14 @@ def _pct(a, b):
     return f"{100 * a / b:5.1f}%" if b else "    -"
 
 
+def cmd_settle(con, args):
+    """Chiude le schedine aperte sui risultati arrivati (verifica e aggiorna
+    calibrazione/learning_log). Non genera nuove schedine."""
+    today = args.date or date.today().isoformat()
+    closed = learn.settle(con, today)
+    print(f"Giornate verificate: {', '.join(closed) or 'nessuna'}")
+
+
 def cmd_report(con, args):
     t = con.execute(
         """SELECT COUNT(*) n, SUM(status='won') won, SUM(stake) st, SUM(payout) ret
@@ -235,6 +243,9 @@ def main(argv=None):
             p.add_argument("--start", required=True, help="primo giorno (AAAA-MM-GG)")
             p.add_argument("--end")
     sub.add_parser("report", help="risultati e cosa ha imparato").set_defaults(fn=cmd_report)
+    p = sub.add_parser("settle", help="verifica schedine aperte sui risultati arrivati")
+    p.add_argument("--date", help="oggi (AAAA-MM-GG); default=oggi")
+    p.set_defaults(fn=cmd_settle)
     p = sub.add_parser("slips", help="mostra le schedine di un giorno")
     p.add_argument("--date")
     p.add_argument("--limit", type=int, default=5)

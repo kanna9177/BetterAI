@@ -53,30 +53,32 @@ if errorlevel 1 (
     exit /b 1
 )
 
-if not exist data\betterai.db (
-    echo.
-    echo   [i] database vuoto: sync iniziale openfootball ^(~10 secondi^)...
-    %PY% -m betterai sync
-)
+echo.
+echo   [2/6] scarico calendari + risultati nuovi ^(openfootball^)...
+%PY% -m betterai sync
 
-rem --- 2/4: Auto-refresh quote se abbiamo un curl fresco o un dump json salvato
+rem --- Auto-refresh quote se abbiamo un curl fresco o un dump json salvato
 if exist curl.txt (
     echo.
-    echo   [2/4] trovato curl.txt: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
+    echo   [3/6] trovato curl.txt: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
     %PY% -m betterai sisal-sync --curl curl.txt
 ) else if exist sisal.json (
     echo.
-    echo   [2/4] trovato sisal.json: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
+    echo   [3/6] trovato sisal.json: ri-sincronizzo quote Sisal ^(auto-migra db se serve^)...
     %PY% -m betterai sisal-sync --json sisal.json
 ) else (
-    echo   [2/4] nessun curl.txt / sisal.json ^(skip sync^).
+    echo   [3/6] nessun curl.txt / sisal.json ^(skip quote^).
 )
 
 echo.
-echo   [3/4] apro il browser...
+echo   [4/6] verifico le schedine aperte sui risultati arrivati...
+%PY% -m betterai settle
+
+echo.
+echo   [5/6] apro il browser...
 start "" "http://127.0.0.1:5000"
 
-echo   [4/4] avvio il server BetterAI. CHIUDI QUESTA FINESTRA per fermarlo
+echo   [6/6] avvio il server BetterAI. CHIUDI QUESTA FINESTRA per fermarlo
 echo        ^(dal telefono: stesso WiFi, apri l'URL "dal telefono" qui sotto^)
 echo.
 %PY% -m betterai web --host 0.0.0.0 --port 5000
